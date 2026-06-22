@@ -1047,7 +1047,136 @@ lookbookSection:true
 .wa-float{
     display:none !important;
 }
-</style>
+
+    :root{
+      --nav-h: 80px;
+    }
+
+    body{
+      padding-top: var(--nav-h, 80px);
+    }
+
+    .navbar{
+      background: rgba(248, 246, 242, .98);
+      box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.04);
+      isolation: isolate;
+      z-index: 9999;
+      backdrop-filter: blur(14px) saturate(1.1);
+      -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    }
+
+    .hero{
+      margin-top: calc(var(--nav-h, 80px) * -1);
+      min-height: 100dvh;
+      height: 100dvh;
+      padding-top: calc(var(--nav-h, 80px) + 30px);
+    }
+
+    .hero.stack-mode,
+    .hero.dior-mode{
+      margin-top: calc(var(--nav-h, 80px) * -1);
+    }
+
+    .section,
+    section{
+      position: relative;
+      z-index: 1;
+      scroll-margin-top: calc(var(--nav-h, 80px) + 18px);
+    }
+
+    .hero-content{
+      max-width: min(780px, calc(100% - 32px));
+    }
+
+    .card,
+    .product,
+    .testimonial-card,
+    .about-box{
+      overflow: hidden;
+    }
+
+    .catalog-card{
+      overflow: hidden;
+    }
+
+    .card-top-actions{
+      z-index: 10;
+    }
+
+    .wishlist-btn{
+      z-index: 11;
+    }
+
+    .product{
+      position: relative;
+    }
+
+    @media (max-width: 768px){
+      body{
+        padding-top: var(--nav-h, 60px);
+      }
+
+      .navbar{
+        padding: 0 16px;
+      }
+
+      .nav-links{
+        max-width: calc(100vw - 128px);
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        gap: 14px;
+        scrollbar-width: none;
+      }
+
+      .nav-links::-webkit-scrollbar{
+        display: none;
+      }
+
+      .nav-links a{
+        white-space: nowrap;
+        font-size: 11px;
+      }
+
+      .hero{
+        padding-top: calc(var(--nav-h, 60px) + 16px);
+      }
+
+      .section{
+        padding: 64px 4%;
+      }
+
+      .grid,
+      .products,
+      .support-grid,
+      .two-col-grid,
+      .filter-bar{
+        grid-template-columns: 1fr;
+      }
+
+      .hero-content{
+        padding: 24px;
+      }
+
+      .hero h1{
+        font-size: clamp(36px, 12vw, 66px);
+      }
+
+      .hero p{
+        font-size: 15px;
+      }
+
+      .search-icon{
+        width: 36px;
+        height: 36px;
+      }
+
+      .logo img{
+        max-height: 44px !important;
+      }
+    }
+
+  </style>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1613,6 +1742,10 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
         navbar.style.minHeight = `${barHeight}px`;
         navbar.style.overflow = 'visible';
       }
+
+      document.documentElement.style.setProperty('--nav-h', `${barHeight}px`);
+      document.body.style.setProperty('--nav-h', `${barHeight}px`);
+      document.body.style.paddingTop = `${barHeight}px`;
 
       if (logoImg) {
         logoImg.style.setProperty('height', `${safeLogoHeight}px`, 'important');
