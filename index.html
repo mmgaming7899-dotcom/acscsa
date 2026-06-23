@@ -87,6 +87,7 @@
 
     .hero{
       min-height:100vh;
+      height:100vh;
       position:relative;
       display:flex;
       align-items:center;
@@ -107,6 +108,7 @@
       width:100%;
       height:100%;
       object-fit:cover;
+      object-position:center center;
       display:block;
     }
     .hero-bg video{background:#000;}
@@ -300,6 +302,29 @@
       transition:transform .45s ease;
     }
     .hero-dior-panel:hover .hero-dior-media{transform:scale(1.02);}
+    .hero-dior-panel::before{
+      content:"Lihat Koleksi →";
+      position:absolute;
+      bottom:28px;
+      left:50%;
+      transform:translateX(-50%) translateY(8px);
+      z-index:5;
+      color:rgba(255,255,255,0);
+      font-size:11px;
+      font-weight:600;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      white-space:nowrap;
+      transition:color .3s ease, transform .3s ease;
+      pointer-events:none;
+    }
+    .hero-dior-panel.right::before{
+      content:"Lihat Koleksi ←";
+    }
+    .hero-dior-panel:hover::before{
+      color:rgba(255,255,255,.85);
+      transform:translateX(-50%) translateY(0);
+    }
     .hero-dior-panel::after{
       content:"";
       position:absolute;
@@ -337,15 +362,19 @@
       text-shadow:0 8px 30px rgba(0,0,0,.35);
       max-width:min(78%, 520px);
       pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      gap:0;
     }
     .hero-dior-text.top-left{
       top:7%;
       left:6%;
       text-align:left;
+      align-items:flex-start;
     }
     .hero-dior-text.bottom-right{
-      right:6%;
-      bottom:7%;
+      right:5%;
+      bottom:8%;
       text-align:right;
       align-items:flex-end;
       margin-left:auto;
@@ -584,6 +613,32 @@
     .wishlist-btn.active{
       background:#ffeff3;
       color:#e11d48;
+    }
+    .badge{
+      position:absolute;
+      top:12px;
+      left:12px;
+      z-index:2;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.92);
+      color:#222;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(0,0,0,.06);
+    }
+    .badge.sale{
+      left:auto;
+      right:12px;
+      background:#eef5ff;
+      color:var(--blue);
+    }
+    .badge.latest{
+      left:12px;
+      bottom:12px;
+      top:auto;
+      background:#ecfeff;
+      color:#0f766e;
     }
     .detail-list{
       display:grid;
@@ -993,29 +1048,14 @@ transform:scale(1.08);
 
 
 <style>
-.scroll-progress{position:fixed;top:0;left:0;height:3px;z-index:9999;background:#1f6feb;width:0}
+
 .reveal-lux{opacity:0;transform:translateY(60px);transition:all .9s ease}
 .reveal-lux.show{opacity:1;transform:none}
 </style>
 
-<!-- SEALA V6 DIOR UPGRADE -->
-<style>
-html{scroll-behavior:smooth}
-#seala-progress{position:fixed;top:0;left:0;height:4px;width:0;z-index:99999;background:#60c3dd}
-</style>
-<script>
-window.addEventListener('DOMContentLoaded',()=>{
- const bar=document.createElement('div');
- bar.id='seala-progress';
- document.body.appendChild(bar);
- window.addEventListener('scroll',()=>{
-   const h=document.documentElement;
-   const p=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
-   bar.style.width=p+'%';
- });
-});
-</script>
-<!-- END V6 -->
+
+<!-- SEALA V6 DIOR UPGRADE removed: progress bar disabled -->
+
 
 
 <!-- SEALA V7 LUXURY UPGRADE -->
@@ -1179,13 +1219,236 @@ lookbookSection:true
   </style>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 window.SEALA_SUPABASE_URL = 'https://ciyjwcghppoykikypdbn.supabase.co';
 window.SEALA_SUPABASE_KEY = 'sb_publishable_4lm2c3vxZpJi3LwrDk-9QA_7JFdFs1Q';
 window.SEALA_SUPABASE_TABLE = 'settings';
 window.SEALA_SUPABASE_ROW_KEY = 'homepage';
 </script>
+
+
+<style>
+  body{padding-top:0 !important;}
+  .navbar{position:fixed !important; top:0; left:0; right:0;}
+  .hero{
+    margin-top:0 !important;
+    min-height:calc(100dvh - var(--nav-h, 80px)) !important;
+    height:auto !important;
+    padding-top:calc(var(--nav-h, 80px) + 20px) !important;
+    padding-bottom:56px !important;
+  }
+  .hero.stack-mode,
+  .hero.dior-mode{
+    margin-top:0 !important;
+  }
+  .section:first-of-type,
+  #new-products{
+    scroll-margin-top:calc(var(--nav-h, 80px) + 20px);
+    padding-top:96px !important;
+  }
+  #new-products, #best-products{
+    background:#f6f1ec !important;
+  }
+
+  [role="progressbar"],
+  .progress,
+  .progress-bar,
+  .loading-bar,
+  .top-progress,
+  .page-progress,
+  [class*="progress"],
+  [id*="progress"],
+  body > div[style*="height: 2px"],
+  body > div[style*="height: 3px"],
+  body > div[style*="height: 4px"]{
+    display:none !important;
+    visibility:hidden !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+    height:0 !important;
+  }
+
+  .catalog-card .product-img,
+  .catalog-card .product-img img{
+    pointer-events:auto !important;
+  }
+  .product-gallery{
+    position:relative;
+    cursor:crosshair;
+  }
+  .gallery-main{
+    transition:transform .35s ease, opacity .25s ease;
+    will-change:transform, opacity;
+  }
+  .product-gallery:hover .gallery-main{
+    transform:scale(1.02);
+  }
+  .gallery-hint{display:none !important;
+    position:absolute;
+    left:12px;
+    bottom:12px;
+    z-index:3;
+    padding:7px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.86);
+    color:#111;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.2px;
+    box-shadow:0 8px 18px rgba(0,0,0,.08);
+    opacity:0;
+    transform:translateY(8px);
+    transition:.25s ease;
+    pointer-events:none;
+  }
+  .product-gallery:hover .gallery-hint{display:none !important;
+    opacity:1;
+    transform:translateY(0);
+  }
+  .gallery-dots{
+    position:absolute;
+    right:12px;
+    bottom:14px;
+    z-index:3;
+    display:flex;
+    gap:6px;
+    pointer-events:none;
+  }
+  .gallery-dot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:rgba(255,255,255,.46);
+    box-shadow:0 0 0 1px rgba(0,0,0,.08);
+  }
+  .gallery-dot.active{
+    background:#fff;
+  }
+</style>
+
+
+<style id="seala-hotfix-v2">
+/* HERO FIX */
+.hero.stack-mode .hero-stack-item{
+  height:80vh !important;
+  min-height:80vh !important;
+}
+.hero.stack-mode .hero-stack-item img,
+.hero.stack-mode .hero-stack-item video{
+  object-fit:cover !important;
+  object-position:center 30% !important;
+}
+.hero-dior-media{
+  object-position:center 30% !important;
+}
+
+/* MOBILE */
+@media (max-width:768px){
+  .hero.stack-mode .hero-stack-item{
+    height:65vh !important;
+    min-height:65vh !important;
+  }
+  .hero-dior-media{
+    object-position:center 25% !important;
+  }
+}
+
+/* PRODUK TERBARU JANGAN NAIK KE GAMBAR */
+#new-products,
+#best-products{
+  position:relative;
+  z-index:2;
+  margin-top:40px !important;
+  clear:both !important;
+}
+</style>
+
+
+<style id="seala-final-hotfix">
+.hero.stack-mode .hero-stack-item,
+.hero.dior-mode{
+    height:100vh !important;
+    min-height:100vh !important;
+    overflow:hidden !important;
+}
+.hero.stack-mode .hero-stack-item img,
+.hero.stack-mode .hero-stack-item video,
+.hero-dior-media{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    object-position:center center !important;
+    display:block !important;
+}
+#new-products,#best-products,.new-products,.best-products{
+    position:relative !important;
+    z-index:10 !important;
+    margin-top:0 !important;
+    transform:none !important;
+}
+.wishlist-btn,.wishlist-icon{
+    z-index:20 !important;
+    overflow:hidden !important;
+}
+.product-card{
+    overflow:hidden !important;
+}
+.product-card img{
+    transition:opacity .8s ease, transform .8s ease !important;
+}
+</style>
+
+
+<style id="seala-chatgpt-fix">
+.catalog-card,
+.product-card,
+.card{
+  overflow:hidden !important;
+}
+
+.wishlist-btn{
+  z-index:50 !important;
+}
+
+.gallery-image,
+.catalog-card img{
+  object-fit:cover !important;
+  object-position:center center !important;
+}
+
+.hero img,
+.hero-slide img,
+.hero-bg img{
+  object-position:center top !important;
+}
+</style>
+
+
+<style id="catalog-primary-fix">
+.catalog-main-image,
+.product-main-image{
+    opacity:1 !important;
+    z-index:5 !important;
+}
+
+.catalog-thumb:first-child,
+.product-thumb:first-child{
+    order:-1 !important;
+}
+</style>
+
+
+<style>
+.size-chart-image{
+  width:100%;
+  display:block;
+  max-height:420px;
+  object-fit:contain;
+  border-radius:16px;
+  border:1px solid rgba(0,0,0,.08);
+  background:#fff;
+}
+</style>
 
 </head>
 <body>
@@ -1280,39 +1543,27 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
   </section>
 
   <section class="section" id="testimonials">
-    <h2 class="section-title">Testimoni Pelanggan</h2>
-    <p class="section-subtitle">Ulasan singkat dari pembeli untuk membantu meningkatkan kepercayaan.</p>
+    <h2 class="section-title" id="testimonialTitle">Testimoni Pelanggan</h2>
+    <p class="section-subtitle" id="testimonialSubtitle">Ulasan singkat dari pembeli untuk membantu meningkatkan kepercayaan.</p>
     <div class="testimonial-grid" id="testimonialGrid"></div>
   </section>
 
   <section class="section" id="support">
-    <h2 class="section-title">FAQ, Kontak, & Kebijakan Retur</h2>
-    <p class="section-subtitle">Informasi penting yang biasanya dicari sebelum pembeli checkout.</p>
+    <h2 class="section-title" id="supportTitle">FAQ, Kontak, & Kebijakan Retur</h2>
+    <p class="section-subtitle" id="supportSubtitle">Informasi penting yang biasanya dicari sebelum pembeli checkout.</p>
     <div class="support-grid">
       <div class="card">
-        <h3>FAQ</h3>
-        <div class="faq-item">
-          <h3>Bagaimana cara memilih ukuran?</h3>
-          <p>Cek size chart, lalu cocokkan lingkar dada, pinggang, dan panjang yang paling mendekati ukuran tubuh.</p>
-        </div>
-        <div class="faq-item">
-          <h3>Apakah warna produk sama persis dengan foto?</h3>
-          <p>Sedikit perbedaan bisa terjadi karena pencahayaan foto dan layar perangkat.</p>
-        </div>
-        <div class="faq-item" style="border-bottom:none;">
-          <h3>Berapa lama proses pengiriman?</h3>
-          <p>Tergantung platform pembelian dan lokasi pengiriman.</p>
-        </div>
+        <h3 id="faqHeading">FAQ</h3>
+        <div id="faqList"></div>
       </div>
       <div class="card">
-        <h3>Kontak & Retur</h3>
-        <div class="info-list">
+        <h3 id="contactHeading">Kontak & Retur</h3>
+        <div class="info-list" id="contactList">
           <div class="detail-item"><strong>WhatsApp:</strong> +62 878-5608-8414</div>
           <div class="detail-item"><strong>Email:</strong> hello@seala.id</div>
-          <div class="detail-item"><strong>Instagram:</strong> @seala.fashion</div>
-          <div class="detail-item"><strong>Kebijakan Retur:</strong> Retur dapat diajukan bila barang cacat atau salah kirim sesuai syarat yang berlaku.</div>
+          <div class="detail-item"><strong>Instagram:</strong> @sealaofficial</div>
+          <div class="detail-item"><strong>Retur:</strong> Barang bisa ditukar sesuai syarat & ketentuan.</div>
         </div>
-        <a class="section-link" href="#order">Lihat opsi pembelian</a>
       </div>
     </div>
   </section>
@@ -1362,24 +1613,7 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
 
       <div class="modal-size-chart" id="modalSizeChart">
         <div class="modal-section-title">SIZE CHART</div>
-        <div style="overflow:auto;">
-          <table class="size-chart-table">
-            <thead>
-              <tr>
-                <th>Size</th>
-                <th>Dada</th>
-                <th>Pinggang</th>
-                <th>Panjang</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>S</td><td>84–88 cm</td><td>66–70 cm</td><td>55–58 cm</td></tr>
-              <tr><td>M</td><td>88–92 cm</td><td>70–74 cm</td><td>56–59 cm</td></tr>
-              <tr><td>L</td><td>92–96 cm</td><td>74–78 cm</td><td>57–60 cm</td></tr>
-              <tr><td>XL</td><td>96–100 cm</td><td>78–82 cm</td><td>58–61 cm</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div id="modalSizeChartVisual"></div>
         <div class="size-chart-note">Ukuran dapat sedikit berbeda tergantung model dan bahan produk.</div>
       </div>
 
@@ -1402,6 +1636,7 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       <select id="filterCategory" class="filter-select">
         <option value="">Semua Kategori</option>
         <option value="Atasan">Atasan</option>
+        <option value="Bawahan">Bawahan</option>
         <option value="Rok">Rok</option>
         <option value="Outer">Outer</option>
         <option value="Set Outfit">Set Outfit</option>
@@ -1544,6 +1779,14 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
     const catalogGrid = document.getElementById("catalogGrid");
     const wishlistProducts = document.getElementById("wishlistProducts");
     const testimonialGrid = document.getElementById("testimonialGrid");
+    const faqList = document.getElementById("faqList");
+    const supportTitle = document.getElementById("supportTitle");
+    const supportSubtitle = document.getElementById("supportSubtitle");
+    const faqHeading = document.getElementById("faqHeading");
+    const contactHeading = document.getElementById("contactHeading");
+    const testimonialTitle = document.getElementById("testimonialTitle");
+    const testimonialSubtitle = document.getElementById("testimonialSubtitle");
+    const contactList = document.getElementById("contactList");
 
     const filterSearch = document.getElementById("filterSearch");
     const filterCategory = document.getElementById("filterCategory");
@@ -1594,15 +1837,20 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
 
     function loadSiteSettings(){
       const data = safeParse(SITE_KEY, DEFAULT_SITE);
+      // FIX: btn1Text/btn2Text are the canonical keys saved by admin.
+      // Always prefer them over the cached/derived primaryBtn/secondaryBtn
+      // to prevent stale-cache bug where catalog writes primaryBtn back to
+      // localStorage and admin changes to btn1Text are silently ignored.
       return {
         ...data,
-        primaryBtn: data.primaryBtn || data.btn1Text || DEFAULT_SITE.primaryBtn,
-        secondaryBtn: data.secondaryBtn || data.btn2Text || DEFAULT_SITE.secondaryBtn,
-        primaryLink: data.primaryLink || data.btn1Link || DEFAULT_SITE.primaryLink,
-        secondaryLink: data.secondaryLink || data.btn2Link || DEFAULT_SITE.secondaryLink,
+        primaryBtn: data.btn1Text || data.primaryBtn || DEFAULT_SITE.primaryBtn,
+        secondaryBtn: data.btn2Text || data.secondaryBtn || DEFAULT_SITE.secondaryBtn,
+        primaryLink: data.btn1Link || data.primaryLink || DEFAULT_SITE.primaryLink,
+        secondaryLink: data.btn2Link || data.secondaryLink || DEFAULT_SITE.secondaryLink,
         navLogoSize: Number(data.navLogoSize ?? DEFAULT_SITE.navLogoSize ?? 130),
         navBarHeight: Number(data.navBarHeight ?? DEFAULT_SITE.navBarHeight ?? 80),
         landingMode: String(data.landingMode || DEFAULT_SITE.landingMode || "slider"),
+        updatedAt: Number(data.updatedAt || 0),
       };
     }
 
@@ -1611,34 +1859,71 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
     const SUPABASE_KEY = window.SEALA_SUPABASE_KEY || "";
     const SUPABASE_TABLE = window.SEALA_SUPABASE_TABLE || "settings";
     const SUPABASE_ROW_KEY = window.SEALA_SUPABASE_ROW_KEY || "homepage";
-    const SUPABASE_ENABLED = !!(window.supabase && SUPABASE_URL && SUPABASE_KEY);
-
-    function createSupabaseClient(){
-      if (!SUPABASE_ENABLED) return null;
-      try {
-        return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      } catch (err) {
-        console.warn("Supabase client init failed:", err);
-        return null;
-      }
-    }
-
-    const sb = createSupabaseClient();
+    const SUPABASE_REST_BASE = SUPABASE_URL ? `${SUPABASE_URL.replace(/\/$/, "")}/rest/v1` : "";
+    const SUPABASE_REST_HEADERS = {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    };
 
     async function loadRemoteHomepageSettings(){
-      if (!sb) return null;
+      if (!SUPABASE_REST_BASE || !SUPABASE_KEY) return null;
       try {
-        const { data, error } = await sb
-          .from(SUPABASE_TABLE)
-          .select("value")
-          .eq("key", SUPABASE_ROW_KEY)
-          .maybeSingle();
-        if (error) throw error;
+        const url = new URL(`${SUPABASE_REST_BASE}/${encodeURIComponent(SUPABASE_TABLE)}`);
+        url.searchParams.set("select", "value");
+        url.searchParams.set("key", `eq.${SUPABASE_ROW_KEY}`);
+        const res = await fetch(url.toString(), {
+          method: "GET",
+          headers: SUPABASE_REST_HEADERS
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (Array.isArray(data)) return data[0]?.value || null;
         return data?.value || null;
       } catch (err) {
         console.warn("Failed to load remote homepage settings:", err);
         return null;
       }
+    }
+
+    function parseFaqText(rawText) {
+      const lines = String(rawText || "")
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+      const items = [];
+      for (const line of lines) {
+        const [q, a] = line.split("|");
+        if (!q || !a) continue;
+        items.push({ question: q.trim(), answer: a.trim() });
+      }
+      return items;
+    }
+
+    function parseTestimonialsText(rawText) {
+      const lines = String(rawText || "")
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+      const items = [];
+      for (const line of lines) {
+        const [name, ratingRaw, ...rest] = line.split("|");
+        const comment = rest.join("|").trim();
+        const rating = Math.max(1, Math.min(5, Number(ratingRaw) || 5));
+        if (!name || !comment) continue;
+        items.push({ name: name.trim(), rating, text: comment });
+      }
+      return items;
+    }
+
+    function formatPhone(value) {
+      const digits = String(value || "").replace(/\D+/g, "");
+      if (!digits) return "+62 878-5608-8414";
+      const normalized = digits.startsWith("62") ? digits : `62${digits.replace(/^0+/, "")}`;
+      if (normalized.length <= 4) return `+${normalized}`;
+      if (normalized.length <= 8) return `+${normalized.replace(/^(62)(\d{3})(\d+)/, "$1 $2-$3")}`;
+      return `+${normalized.replace(/^(62)(\d{3})(\d{4})(\d{0,4}).*$/, (_, cc, a, b, c) => c ? `${cc} ${a}-${b}-${c}` : `${cc} ${a}-${b}`)}`;
     }
 
     function loadCatalog(){
@@ -1650,6 +1935,52 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       } catch {
         return [];
       }
+    }
+
+    const SUPABASE_PRODUCTS_TABLE = "products";
+    const productsBroadcastChannel = ("BroadcastChannel" in window)
+      ? new BroadcastChannel("seala_products_sync_v1")
+      : null;
+
+    async function loadRemoteCatalog(){
+      if (!SUPABASE_REST_BASE || !SUPABASE_KEY) return [];
+      try {
+        const url = new URL(`${SUPABASE_REST_BASE}/${encodeURIComponent(SUPABASE_PRODUCTS_TABLE)}`);
+        url.searchParams.set("select", "*");
+        url.searchParams.set("order", "updatedAt.desc");
+        const res = await fetch(url.toString(), {
+          method: "GET",
+          headers: SUPABASE_REST_HEADERS
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.warn("Failed to load remote catalog:", err);
+        return [];
+      }
+    }
+
+    async function refreshCatalogFromSupabase(force = false){
+      const remote = await loadRemoteCatalog();
+      if (!Array.isArray(remote) || !remote.length) return false;
+      const local = loadCatalog();
+      const merged = new Map();
+      for (const item of local) {
+        if (item && item.id) merged.set(String(item.id), item);
+      }
+      for (const item of remote) {
+        if (!item || !item.id) continue;
+        const key = String(item.id);
+        const prev = merged.get(key);
+        if (!prev || Number(item.updatedAt || item.createdAt || 0) >= Number(prev.updatedAt || prev.createdAt || 0) || force) {
+          merged.set(key, item);
+        }
+      }
+      adminCatalog = Array.from(merged.values());
+      try { localStorage.setItem(LS_KEY, JSON.stringify(adminCatalog)); } catch {}
+      syncSiteToPage();
+      return true;
     }
 
     function loadWishlist(){
@@ -1669,6 +2000,7 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
 
     let site = loadSiteSettings();
     let adminCatalog = loadCatalog();
+    void refreshCatalogFromSupabase();
 
     const slides = Array.isArray(site.slides) && site.slides.length ? site.slides : DEFAULT_SITE.slides;
 
@@ -1702,6 +2034,7 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
         const merged = {
           ...site,
           ...remote,
+          updatedAt: Number(remote.updatedAt || site.updatedAt || 0),
           primaryBtn: remote.primaryBtn || remote.btn1Text || site.primaryBtn || DEFAULT_SITE.primaryBtn,
           secondaryBtn: remote.secondaryBtn || remote.btn2Text || site.secondaryBtn || DEFAULT_SITE.secondaryBtn,
           primaryLink: remote.primaryLink || remote.btn1Link || site.primaryLink || DEFAULT_SITE.primaryLink,
@@ -1714,6 +2047,8 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
         Object.assign(site, merged);
         try { localStorage.setItem(SITE_KEY, JSON.stringify(site)); } catch {}
         renderHero();
+        renderTestimonials();
+        renderFaq();
         applyNavbarSettings();
         applyLandingMode();
         updateSlide();
@@ -1883,9 +2218,150 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       renderCatalog();
       renderWishlist();
       renderTestimonials();
+      renderFaq();
       updateSlide();
       restart();
       renderSearchResults();
+    }
+
+    let homepageRefreshTimer = null;
+    let homepageRefreshInFlight = false;
+    const homepageBroadcastChannel = ("BroadcastChannel" in window)
+      ? new BroadcastChannel("seala_homepage_sync_v1")
+      : null;
+
+    if (homepageBroadcastChannel) {
+      homepageBroadcastChannel.onmessage = (event) => {
+        const data = event?.data || {};
+        if (data?.type === "homepage-updated") {
+          void refreshHomepageFromSources(true);
+        }
+      };
+    }
+
+    if (productsBroadcastChannel) {
+      productsBroadcastChannel.onmessage = (event) => {
+        const data = event?.data || {};
+        if (data?.type === "products-updated") {
+          void refreshCatalogFromSupabase(true);
+        }
+      };
+    }
+
+    window.addEventListener("message", (event) => {
+      if (event?.data?.type === "seala-homepage-updated") {
+        void refreshHomepageFromSources(true);
+      }
+      if (event?.data?.type === "seala-products-updated") {
+        void refreshCatalogFromSupabase(true);
+      }
+    });
+
+    function pickLatestHomepageSettings(localSite, remoteSite) {
+      const localUpdated = Number(localSite?.updatedAt || 0);
+      const remoteUpdated = Number(remoteSite?.updatedAt || 0);
+      if (remoteSite && remoteUpdated >= localUpdated) return remoteSite;
+      return localSite;
+    }
+
+    async function refreshHomepageFromSources(force = false) {
+      if (homepageRefreshInFlight) return false;
+      homepageRefreshInFlight = true;
+      try {
+        const local = loadSiteSettings();
+        const remote = await loadRemoteHomepageSettings();
+        const next = pickLatestHomepageSettings(local, remote && typeof remote === "object" ? remote : null);
+
+        const currentUpdated = Number(site.updatedAt || 0);
+        const nextUpdated = Number(next?.updatedAt || 0);
+        const shouldApply = force || nextUpdated !== currentUpdated || JSON.stringify({
+          title: next?.title,
+          subtitle: next?.subtitle,
+          description: next?.description,
+          btn1Text: next?.btn1Text,
+          btn1Link: next?.btn1Link,
+          btn2Text: next?.btn2Text,
+          btn2Link: next?.btn2Link,
+          newTitle: next?.newTitle,
+          bestTitle: next?.bestTitle,
+          aboutText: next?.aboutText,
+          contactWhatsapp: next?.contactWhatsapp,
+          contactEmail: next?.contactEmail,
+          contactInstagram: next?.contactInstagram,
+          orderWhatsAppLink: next?.orderWhatsAppLink,
+          orderShopeeLink: next?.orderShopeeLink,
+          orderTiktokLink: next?.orderTiktokLink,
+          returnPolicy: next?.returnPolicy,
+          faqText: next?.faqText,
+          testimonialsText: next?.testimonialsText,
+          landingMode: next?.landingMode,
+          diorCenterText: next?.diorCenterText,
+          diorLeftLabel: next?.diorLeftLabel,
+          diorLeftTitle: next?.diorLeftTitle,
+          diorLeftDesc: next?.diorLeftDesc,
+          diorRightLabel: next?.diorRightLabel,
+          diorRightTitle: next?.diorRightTitle,
+          diorRightDesc: next?.diorRightDesc
+        }) !== JSON.stringify({
+          title: site.title,
+          subtitle: site.subtitle,
+          description: site.description,
+          btn1Text: site.btn1Text,
+          btn1Link: site.btn1Link,
+          btn2Text: site.btn2Text,
+          btn2Link: site.btn2Link,
+          newTitle: site.newTitle,
+          bestTitle: site.bestTitle,
+          aboutText: site.aboutText,
+          contactWhatsapp: site.contactWhatsapp,
+          contactEmail: site.contactEmail,
+          contactInstagram: site.contactInstagram,
+          orderWhatsAppLink: site.orderWhatsAppLink,
+          orderShopeeLink: site.orderShopeeLink,
+          orderTiktokLink: site.orderTiktokLink,
+          returnPolicy: site.returnPolicy,
+          faqText: site.faqText,
+          testimonialsText: site.testimonialsText,
+          landingMode: site.landingMode,
+          diorCenterText: site.diorCenterText,
+          diorLeftLabel: site.diorLeftLabel,
+          diorLeftTitle: site.diorLeftTitle,
+          diorLeftDesc: site.diorLeftDesc,
+          diorRightLabel: site.diorRightLabel,
+          diorRightTitle: site.diorRightTitle,
+          diorRightDesc: site.diorRightDesc
+        });
+
+        if (!shouldApply) return false;
+
+        Object.keys(site).forEach((key) => delete site[key]);
+        Object.assign(site, next);
+        // FIX: strip normalized/derived keys before saving to localStorage so
+        // they are never cached and do not shadow the canonical btn1Text keys
+        // saved by the admin (prevents stale primaryBtn overriding new btn1Text).
+        try {
+          const toSave = { ...site };
+          delete toSave.primaryBtn;
+          delete toSave.secondaryBtn;
+          delete toSave.primaryLink;
+          delete toSave.secondaryLink;
+          localStorage.setItem(SITE_KEY, JSON.stringify(toSave));
+        } catch {}
+        syncSiteToPage();
+        return true;
+      } catch (err) {
+        console.warn("Homepage refresh failed:", err);
+        return false;
+      } finally {
+        homepageRefreshInFlight = false;
+      }
+    }
+
+    function startHomepageRefreshLoop() {
+      clearInterval(homepageRefreshTimer);
+      homepageRefreshTimer = setInterval(() => {
+        void refreshHomepageFromSources();
+      }, 1500);
     }
 
     function rupiah(value){
@@ -1958,6 +2434,11 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
     }
 
     function normalizeItem(item, fallbackSource){
+      const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : ["Default"];
+      const stockByColor = item.stockByColor && typeof item.stockByColor === "object"
+        ? { ...item.stockByColor }
+        : (colors.length ? { [colors[0]]: getProductTotalStock(item) } : {});
+      const totalStock = Object.values(stockByColor).reduce((sum, value) => sum + Number(value || 0), 0);
       return {
         id: item.id || item.sku || `ADMIN-${Math.random().toString(36).slice(2, 8)}`,
         name: item.name || "Produk",
@@ -1965,17 +2446,46 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
         desc: item.desc || "",
         price: Number(String(item.price || 0).replace(/[^\d]/g, "") || 0),
         image: item.image || (item.colorImages && Object.values(item.colorImages)[0]) || CATALOG_PRODUCTS[0].image,
-        colors: Array.isArray(item.colors) && item.colors.length ? item.colors : ["Default"],
+        images: Array.isArray(item.images) ? item.images.filter(Boolean) : [],
+        galleryImages: Array.isArray(item.galleryImages) ? item.galleryImages.filter(Boolean) : [],
+        colors,
         colorImages: item.colorImages && typeof item.colorImages === "object" ? { ...item.colorImages } : {},
+        stockByColor,
+        stock: Number.isFinite(totalStock) ? totalStock : getProductTotalStock(item),
         material: item.material || "Bahan nyaman",
         fit: item.fit || "Regular fit",
         care: item.care || "Cuci dengan lembut.",
+        sizeChartImage: item.sizeChartImage || "",
         sizes: Array.isArray(item.sizes) && item.sizes.length ? item.sizes : ["S", "M", "L", "XL"],
-        stock: Number(item.stock || 0),
         shopeeLink: item.shopeeLink || "",
         tiktokLink: item.tiktokLink || "",
+        videos: Array.isArray(item.videos) ? item.videos.filter(Boolean) : [],
+        createdAt: Number(item.createdAt || 0),
+        updatedAt: Number(item.updatedAt || item.createdAt || 0),
+        order: item.order || "regular",
         source: fallbackSource || "katalog"
       };
+    }
+
+    function getProductTotalStock(product){
+      if (!product) return 0;
+      if (product.stockByColor && typeof product.stockByColor === "object" && Object.keys(product.stockByColor).length) {
+        return Object.values(product.stockByColor).reduce((sum, value) => sum + Number(value || 0), 0);
+      }
+      return Number(product.stock || 0);
+    }
+
+    function getStockByColor(product, color){
+      if (!product) return 0;
+      if (product.stockByColor && typeof product.stockByColor === "object") {
+        return Number(product.stockByColor[color] || 0);
+      }
+      return Number(product.stock || 0);
+    }
+
+    function getAvailableColor(product){
+      const colors = Array.isArray(product?.colors) ? product.colors : [];
+      return colors.find(color => getStockByColor(product, color) > 0) || colors[0] || "Default";
     }
 
     function getProductImageForColor(product, color){
@@ -1987,13 +2497,45 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
     }
 
     function getProductCardImage(product){
-      return getProductImageForColor(product, Array.isArray(product.colors) ? product.colors[0] : "");
+      const primaryColor = Array.isArray(product?.colors) ? product.colors[0] : "";
+      return product?.image || getProductImageForColor(product, primaryColor) || "";
+    }
+
+    function getProductGalleryImages(product){
+      const images = [];
+      const push = (value) => {
+        const url = String(value || "").trim();
+        if (url && !images.includes(url)) images.push(url);
+      };
+
+      if (!product) return images;
+
+      push(getProductCardImage(product));
+      push(product.image);
+
+      if (Array.isArray(product.galleryImages)) product.galleryImages.forEach(push);
+      if (Array.isArray(product.images)) product.images.forEach(push);
+
+      if (product.colorImages && typeof product.colorImages === "object") {
+        Object.values(product.colorImages).forEach(push);
+      }
+
+      return images.filter(Boolean);
     }
 
     function getAllProducts(){
       const staticProducts = CATALOG_PRODUCTS.map(p => normalizeItem(p, "katalog"));
-      const fromAdmin = adminCatalog.map(p => normalizeItem(p, p.order === "best" ? "terlaris" : "terbaru"));
-      return [...staticProducts, ...fromAdmin];
+      const fromAdmin = adminCatalog
+        .map(p => normalizeItem(p, p.order === "best" ? "terlaris" : "terbaru"))
+        .sort((a, b) => {
+          const latestDiff = Number(b.createdAt || 0) - Number(a.createdAt || 0);
+          if (latestDiff !== 0) return latestDiff;
+          const orderRank = { new: 0, best: 1, regular: 2 };
+          const rankDiff = (orderRank[a.order || "regular"] ?? 2) - (orderRank[b.order || "regular"] ?? 2);
+          if (rankDiff !== 0) return rankDiff;
+          return String(a.name || "").localeCompare(String(b.name || ""));
+        });
+      return [...fromAdmin, ...staticProducts];
     }
 
     function renderHero(){
@@ -2006,6 +2548,20 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       heroBtn2.setAttribute("href", site.secondaryLink || "#order");
       newSectionTitle.textContent = site.newTitle || DEFAULT_SITE.newTitle;
       bestSectionTitle.textContent = site.bestTitle || DEFAULT_SITE.bestTitle;
+      if (testimonialTitle) testimonialTitle.textContent = site.testimonialsTitle || "Testimoni Pelanggan";
+      if (testimonialSubtitle) testimonialSubtitle.textContent = site.testimonialsSubtitle || "Ulasan singkat dari pembeli untuk membantu meningkatkan kepercayaan.";
+      if (supportTitle) supportTitle.textContent = site.supportTitle || "FAQ, Kontak, & Kebijakan Retur";
+      if (supportSubtitle) supportSubtitle.textContent = site.supportSubtitle || "Informasi penting yang biasanya dicari sebelum pembeli checkout.";
+      if (faqHeading) faqHeading.textContent = site.faqHeading || "FAQ";
+      if (contactHeading) contactHeading.textContent = site.contactHeading || "Kontak & Retur";
+      if (contactList) {
+        contactList.innerHTML = `
+          <div class="detail-item"><strong>WhatsApp:</strong> ${escapeHtml(formatPhone(site.contactWhatsapp || DEFAULT_SITE.contactWhatsapp || WA_NUMBER))}</div>
+          <div class="detail-item"><strong>Email:</strong> ${escapeHtml(site.contactEmail || DEFAULT_SITE.contactEmail || "hello@seala.id")}</div>
+          <div class="detail-item"><strong>Instagram:</strong> ${escapeHtml(site.contactInstagram || DEFAULT_SITE.contactInstagram || "@sealaofficial")}</div>
+          <div class="detail-item"><strong>Retur:</strong> ${escapeHtml(site.returnPolicy || DEFAULT_SITE.returnPolicy || "Barang bisa ditukar sesuai syarat & ketentuan.")}</div>
+        `;
+      }
     }
 
     function renderDots(){
@@ -2083,10 +2639,12 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       const centerText = escapeHtml(site.diorCenterText || DEFAULT_SITE.diorCenterText || "SEALA");
       const leftLabel = escapeHtml(site.diorLeftLabel || DEFAULT_SITE.diorLeftLabel || "ATASAN");
       const leftTitle = escapeHtml(site.diorLeftTitle || DEFAULT_SITE.diorLeftTitle || "Fashion & Accessories");
-      const leftDesc = escapeHtml(site.diorLeftDesc || DEFAULT_SITE.diorLeftDesc || "");
+      // FIX: use ?? (not ||) for desc fields so that an empty string saved by admin
+      // is respected and does not fall back to DEFAULT_SITE hardcoded placeholder text.
+      const leftDesc = escapeHtml(site.diorLeftDesc ?? DEFAULT_SITE.diorLeftDesc ?? "");
       const rightLabel = escapeHtml(site.diorRightLabel || DEFAULT_SITE.diorRightLabel || "BAWAHAN");
       const rightTitle = escapeHtml(site.diorRightTitle || DEFAULT_SITE.diorRightTitle || "Fragrance & Beauty");
-      const rightDesc = escapeHtml(site.diorRightDesc || DEFAULT_SITE.diorRightDesc || "");
+      const rightDesc = escapeHtml(site.diorRightDesc ?? DEFAULT_SITE.diorRightDesc ?? "");
 
       heroBg.innerHTML = `
         <div class="hero-dior-panel left" data-side="left">
@@ -2108,7 +2666,7 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
         <div class="hero-dior-brand">${centerText}</div>
       `;
 
-            const videos = heroBg.querySelectorAll("video");
+      const videos = heroBg.querySelectorAll("video");
       videos.forEach((video) => {
         try { video.load(); } catch (e) {}
         const p = video.play();
@@ -2117,6 +2675,29 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       const panels = heroBg.querySelectorAll(".hero-dior-panel");
       panels.forEach((panel) => {
         const video = panel.querySelector("video");
+        const side = panel.dataset.side; // "left" or "right"
+
+        // Click: navigate to katalog section filtered by category
+        panel.addEventListener("click", () => {
+          const katalogSection = document.getElementById("katalog");
+          const catFilter = document.getElementById("filterCategory");
+          if (catFilter) {
+            // left panel → leftLabel (e.g. "Atasan"), right panel → rightLabel (e.g. "Bawahan")
+            const targetCat = side === "left"
+              ? (site.diorLeftLabel || DEFAULT_SITE.diorLeftLabel || "Atasan")
+              : (site.diorRightLabel || DEFAULT_SITE.diorRightLabel || "Bawahan");
+            // Try to find matching option (case-insensitive)
+            const option = [...catFilter.options].find(
+              o => o.value.toLowerCase() === targetCat.toLowerCase()
+            );
+            catFilter.value = option ? option.value : "";
+            catFilter.dispatchEvent(new Event("change"));
+          }
+          if (katalogSection) {
+            katalogSection.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+
         if (!video) return;
         const play = () => {
           try { video.load(); } catch (e) {}
@@ -2254,8 +2835,8 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       if (f.category && product.category !== f.category) return false;
       if (f.color && !(product.colors || []).includes(f.color)) return false;
       if (f.price === "under150" && product.price >= 150000) return false;
-      if (f.price === "150to200" && (product.price < 150000 || product.price > 200000)) return false;
-      if (f.price === "above200" && product.price <= 200000) return false;
+      if (f.price === "150to200" && (product.price < 150000 || product.price > 320000)) return false;
+      if (f.price === "above200" && product.price <= 320000) return false;
 
       if (f.query) {
         const haystack = [
@@ -2281,14 +2862,27 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
 
     function cardTemplate(item){
       const isWish = wishlist.has(item.id);
+      const gallery = getProductGalleryImages(item);
+      const primaryImage = gallery[0] || getProductCardImage(item) || "";
+      const galleryData = escapeHtml(JSON.stringify(gallery));
+      const totalStock = getProductTotalStock(item);
+      const isLatest = item.order === "new";
+
       return `
-        <article class="product catalog-card ${item.stock <= 0 ? 'out-of-stock' : ''}">
+        <article class="product catalog-card ${totalStock <= 0 ? 'out-of-stock' : ''}">
           <div class="card-top-actions">
             <button type="button" class="wishlist-btn ${isWish ? "active" : ""}" data-wish="${escapeHtml(item.id)}" aria-label="Favorit">♥</button>
           </div>
-          <div class="product-img">
-            ${item.stock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
-            <img src="${escapeHtml(getProductCardImage(item) || "")}" alt="${escapeHtml(item.name || "Produk SEALA")}">
+          <div class="product-img product-gallery" data-gallery='${galleryData}'>
+            ${totalStock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
+            <img class="gallery-main" src="${escapeHtml(primaryImage)}" alt="${escapeHtml(item.name || "Produk SEALA")}">
+            ${isLatest ? `<div class="badge latest">TERBARU</div>` : ``}
+            ${gallery.length > 1 ? `
+              
+              <div class="gallery-dots" aria-hidden="true">
+                ${gallery.map((_, idx) => `<span class="gallery-dot ${idx === 0 ? 'active' : ''}"></span>`).join('')}
+              </div>
+            ` : ``}
           </div>
           <div class="product-body">
             <h3>${escapeHtml(item.name || "Tanpa Nama")}</h3>
@@ -2296,13 +2890,13 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
               <span class="tag">${escapeHtml(item.category || "Produk")}</span>
               <span class="tag">${escapeHtml(item.id || "-")}</span>
             </div>
-            <div class="price">${rupiah(item.price || 0)}</div><div class="tag" style="width:fit-content;">${item.stock > 0 ? "Stok: "+item.stock : "STOK HABIS"}</div>
+            <div class="price">${rupiah(item.price || 0)}</div><div class="tag" style="width:fit-content;">${totalStock > 0 ? "Stok: "+totalStock : "STOK HABIS"}</div>
             <p>${escapeHtml(item.desc || "")}</p>
             <div class="tag" style="width:fit-content;">Bahan: ${escapeHtml(item.material || "-")}</div>
             <div class="tag" style="width:fit-content;">Fit: ${escapeHtml(item.fit || "-")}</div>
             <div class="tag" style="width:fit-content;">Warna: ${escapeHtml((item.colors || []).join(", "))}</div>
             <div class="buy-row">
-              ${item.stock > 0 ? `<button type="button" class="btn btn-buynow" data-buy="${escapeHtml(item.id || "")}">Beli Sekarang</button>` : `<button type="button" class="btn btn-buynow" disabled style="background:#999;cursor:not-allowed;">Stok Habis</button>`}
+              ${totalStock > 0 ? `<button type="button" class="btn btn-buynow" data-buy="${escapeHtml(item.id || "")}">Beli Sekarang</button>` : `<button type="button" class="btn btn-buynow" disabled style="background:#999;cursor:not-allowed;">Stok Habis</button>`}
               <button type="button" class="btn btn-detail" data-detail="${escapeHtml(item.id || "")}">Detail</button>
             </div>
           </div>
@@ -2330,18 +2924,34 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       catalogGrid.querySelectorAll("[data-wish]").forEach(btn => {
         btn.addEventListener("click", () => toggleWishlist(btn.dataset.wish));
       });
+
+      setupCatalogHoverSlides(catalogGrid);
     }
 
     function renderWishlist(){
       const products = getAllProducts().filter(p => wishlist.has(p.id));
       wishlistProducts.innerHTML = products.length
-        ? products.map(item => `
-            <article class="product catalog-card ${item.stock <= 0 ? 'out-of-stock' : ''}">
+        ? products.map(item => {
+            const gallery = getProductGalleryImages(item);
+            const primaryImage = gallery[0] || getProductCardImage(item) || "";
+            const galleryData = escapeHtml(JSON.stringify(gallery));
+            const totalStock = getProductTotalStock(item);
+            const isLatest = item.order === "new";
+            return `
+            <article class="product catalog-card ${totalStock <= 0 ? 'out-of-stock' : ''}">
               <div class="card-top-actions">
                 <button type="button" class="wishlist-btn active" data-wish="${escapeHtml(item.id)}" aria-label="Hapus favorit">♥</button>
               </div>
-              <div class="product-img">
-                <img src="${escapeHtml(getProductCardImage(item) || "")}" alt="${escapeHtml(item.name || "Produk SEALA")}">
+              <div class="product-img product-gallery" data-gallery='${galleryData}'>
+                ${totalStock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
+                <img class="gallery-main" src="${escapeHtml(primaryImage)}" alt="${escapeHtml(item.name || "Produk SEALA")}">
+                ${isLatest ? `<div class="badge latest">TERBARU</div>` : ``}
+                ${gallery.length > 1 ? `
+                  
+                  <div class="gallery-dots" aria-hidden="true">
+                    ${gallery.map((_, idx) => `<span class="gallery-dot ${idx === 0 ? 'active' : ''}"></span>`).join('')}
+                  </div>
+                ` : ``}
               </div>
               <div class="product-body">
                 <h3>${escapeHtml(item.name)}</h3>
@@ -2355,7 +2965,8 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
                 </div>
               </div>
             </article>
-          `).join("")
+          `;
+          }).join("")
         : `<div class="wishlist-empty">Belum ada produk favorit. Klik ikon hati pada katalog untuk menyimpannya.</div>`;
 
       wishlistProducts.querySelectorAll("[data-buy]").forEach(btn => {
@@ -2364,16 +2975,104 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       wishlistProducts.querySelectorAll("[data-wish]").forEach(btn => {
         btn.addEventListener("click", () => toggleWishlist(btn.dataset.wish));
       });
+      setupCatalogHoverSlides(wishlistProducts);
+    }
+
+
+    function setupCatalogHoverSlides(root){
+      const scope = root || document;
+      scope.querySelectorAll('.product-gallery[data-gallery]').forEach(gallery => {
+        if (gallery.dataset.slideReady === '1') return;
+        gallery.dataset.slideReady = '1';
+
+        let images = [];
+        try {
+          images = JSON.parse(gallery.dataset.gallery || '[]');
+        } catch (err) {
+          images = [];
+        }
+        images = Array.isArray(images) ? images.filter(Boolean) : [];
+        if (images.length < 2) return;
+
+        const img = gallery.querySelector('.gallery-main');
+        const dots = Array.from(gallery.querySelectorAll('.gallery-dot'));
+        if (!img) return;
+
+        let timer = null;
+        let index = 0;
+
+        const setDots = (activeIndex) => {
+          dots.forEach((dot, idx) => dot.classList.toggle('active', idx === activeIndex));
+        };
+
+        const showImage = (nextIndex) => {
+          if (!images.length) return;
+          index = (nextIndex + images.length) % images.length;
+          setDots(index);
+
+          img.style.opacity = '0';
+          img.style.transform = 'translateX(12px)';
+          window.setTimeout(() => {
+            img.src = images[index];
+            img.style.transform = 'translateX(-12px)';
+            window.requestAnimationFrame(() => {
+              img.style.opacity = '1';
+              img.style.transform = 'translateX(0)';
+            });
+          }, 150);
+        };
+
+        const start = () => {
+          if (timer) return;
+          showImage(index);
+          timer = window.setInterval(() => showImage(index + 1), 2400);
+        };
+
+        const stop = () => {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          index = 0;
+          img.src = images[0];
+          img.style.opacity = '1';
+          img.style.transform = 'translateX(0)';
+          setDots(0);
+        };
+
+        gallery.addEventListener('mouseenter', start);
+        gallery.addEventListener('mouseleave', stop);
+        gallery.addEventListener('focusin', start);
+        gallery.addEventListener('focusout', stop);
+      });
     }
 
     function renderTestimonials(){
-      testimonialGrid.innerHTML = TESTIMONIALS.map(item => `
+      const testimonials = Array.isArray(site.testimonials) && site.testimonials.length
+        ? site.testimonials
+        : parseTestimonialsText(site.testimonialsText || DEFAULT_SITE.testimonialsText);
+      testimonialGrid.innerHTML = testimonials.map(item => `
         <article class="testimonial-card">
-          <div class="stars">${"★".repeat(item.rating)}${"☆".repeat(5 - item.rating)}</div>
+          <p style="margin:0 0 8px;font-weight:800;">${escapeHtml(item.name)}</p>
+          <div class="stars" style="margin-bottom:12px;">${"★".repeat(item.rating)}${"☆".repeat(5 - item.rating)}</div>
           <p style="line-height:1.8;color:#444;">${escapeHtml(item.text)}</p>
-          <p style="margin-top:12px;font-weight:800;">${escapeHtml(item.name)}</p>
         </article>
       `).join("");
+    }
+
+    function renderFaq(){
+      const faqItems = Array.isArray(site.faqItems) && site.faqItems.length
+        ? site.faqItems
+        : parseFaqText(site.faqText || DEFAULT_SITE.faqText);
+      if (!faqList) return;
+      faqList.innerHTML = faqItems.length
+        ? faqItems.map(item => `
+            <div class="faq-item">
+              <h3>${escapeHtml(item.question)}</h3>
+              <p>${escapeHtml(item.answer)}</p>
+            </div>
+          `).join("")
+        : `<div class="faq-item" style="border-bottom:none;"><h3>Belum ada FAQ</h3><p>Tambahkan FAQ di panel admin agar tampil di sini.</p></div>`;
     }
 
     function toggleWishlist(id){
@@ -2467,14 +3166,44 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
           : `https://www.tiktok.com/search?q=${productQuery}`;
     }
 
+    function renderSizeChartVisual(product){
+      if (!modalSizeChartVisual) return;
+      const src = product?.sizeChartImage || "";
+      if (src){
+        modalSizeChartVisual.innerHTML = `<img class="size-chart-image" src="${escapeHtml(src)}" alt="Size chart ${escapeHtml(product?.name || "")}">`;
+        return;
+      }
+      modalSizeChartVisual.innerHTML = `
+        <div style="overflow:auto;">
+          <table class="size-chart-table">
+            <thead>
+              <tr>
+                <th>Size</th>
+                <th>Dada</th>
+                <th>Pinggang</th>
+                <th>Panjang</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>S</td><td>84–88 cm</td><td>66–70 cm</td><td>55–58 cm</td></tr>
+              <tr><td>M</td><td>88–92 cm</td><td>70–74 cm</td><td>56–59 cm</td></tr>
+              <tr><td>L</td><td>92–96 cm</td><td>74–78 cm</td><td>57–60 cm</td></tr>
+              <tr><td>XL</td><td>96–100 cm</td><td>78–82 cm</td><td>58–61 cm</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
     function openBuyModal(productKey){
       const product = findProductByKey(productKey);
       if (!product) return;
-      if (Number(product.stock || 0) <= 0) { alert("Maaf, produk sedang habis."); return; }
+      const totalStock = getProductTotalStock(product);
+      if (totalStock <= 0) { alert("Maaf, produk sedang habis."); return; }
       activeProduct = product;
-      selectedColor = (product.colors && product.colors[0]) || "Default";
+      selectedColor = getAvailableColor(product);
 
-      modalImage.src = getProductImageForColor(product, selectedColor) || product.image || "";
+      modalImage.src = getProductGalleryImages(product)[0] || product.image || "";
       modalTitle.textContent = product.name || "Beli Sekarang";
       modalCategory.textContent = product.category || "Produk SEALA";
       modalPrice.textContent = rupiah(product.price || 0);
@@ -2484,20 +3213,34 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
         <div class="detail-item"><strong>Bahan:</strong> ${escapeHtml(product.material || "-")}</div>
         <div class="detail-item"><strong>Fit:</strong> ${escapeHtml(product.fit || "-")}</div>
         <div class="detail-item"><strong>Perawatan:</strong> ${escapeHtml(product.care || "-")}</div>
+        <div class="detail-item"><strong>Stok total:</strong> ${totalStock}</div>
+        <div class="detail-item"><strong>Stok ${escapeHtml(selectedColor)}:</strong> ${getStockByColor(product, selectedColor)}</div>
       `;
 
       modalSizes.innerHTML = (product.sizes || []).map(size => `<span class="size-chip">${escapeHtml(size)}</span>`).join("");
+      renderSizeChartVisual(product);
+      renderSizeChartVisual(product);
 
-      modalColors.innerHTML = (product.colors || ["Default"]).map((color, index) => `
-        <button class="color-pill ${index === 0 ? "active" : ""}" data-color="${escapeHtml(color)}">${escapeHtml(color)}</button>
-      `).join("");
+      modalColors.innerHTML = (product.colors || ["Default"]).map((color) => {
+        const colorStock = getStockByColor(product, color);
+        const disabled = colorStock <= 0 ? "disabled" : "";
+        return `<button class="color-pill ${color === selectedColor ? "active" : ""}" data-color="${escapeHtml(color)}" ${disabled}>${escapeHtml(color)}${colorStock > 0 ? ` (${colorStock})` : " (Habis)"}</button>`;
+      }).join("");
 
       modalColors.querySelectorAll("[data-color]").forEach(btn => {
         btn.addEventListener("click", () => {
+          if (btn.disabled) return;
           selectedColor = btn.dataset.color;
           modalColors.querySelectorAll(".color-pill").forEach(el => el.classList.remove("active"));
           btn.classList.add("active");
           modalImage.src = getProductImageForColor(activeProduct, selectedColor) || activeProduct.image || "";
+          modalDetails.innerHTML = `
+            <div class="detail-item"><strong>Bahan:</strong> ${escapeHtml(activeProduct.material || "-")}</div>
+            <div class="detail-item"><strong>Fit:</strong> ${escapeHtml(activeProduct.fit || "-")}</div>
+            <div class="detail-item"><strong>Perawatan:</strong> ${escapeHtml(activeProduct.care || "-")}</div>
+            <div class="detail-item"><strong>Stok total:</strong> ${getProductTotalStock(activeProduct)}</div>
+            <div class="detail-item"><strong>Stok ${escapeHtml(selectedColor)}:</strong> ${getStockByColor(activeProduct, selectedColor)}</div>
+          `;
           updateBuyLinks();
         });
       });
@@ -2570,11 +3313,13 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
     wishlist = new Set(loadWishlist());
 
     syncSiteToPage();
-    void hydrateSiteFromSupabase();
+    void refreshCatalogFromSupabase();
+    void refreshHomepageFromSources(true);
+    startHomepageRefreshLoop();
 
     window.addEventListener("storage", (e) => {
-      if (e.key === SITE_KEY) {
-        syncSiteToPage();
+      if (e.key === SITE_KEY || e.key === `${SITE_KEY}:ping` || e.key === "seala_homepage_sync_v1") {
+        void refreshHomepageFromSources(true);
         return;
       }
       if (e.key === LS_KEY) {
@@ -2587,6 +3332,13 @@ window.SEALA_SUPABASE_ROW_KEY = 'homepage';
       if (e.key === WISHLIST_KEY) {
         wishlist = new Set(loadWishlist());
         renderWishlist();
+      }
+    });
+
+    window.addEventListener("focus", () => void refreshHomepageFromSources());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        void refreshHomepageFromSources();
       }
     });
 
@@ -2709,9 +3461,6 @@ el.style.transform=`translateY(${y*0.12}px)`;
 
 });
 </script>
-
-
-<div class="scroll-progress" id="scrollProgress"></div>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
  document.querySelectorAll('section,h1,h2,h3,p,.product-card,.card-item').forEach(e=>e.classList.add('reveal-lux'));
@@ -2720,10 +3469,24 @@ document.addEventListener('DOMContentLoaded',()=>{
  window.addEventListener('scroll',()=>{
   const h=document.documentElement;
   const p=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
-  const el=document.getElementById('scrollProgress');
-  if(el) el.style.width=p+'%';
  });
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[role="progressbar"], .progress, .progress-bar, .loading-bar, .top-progress, .page-progress, [class*="progress"], [id*="progress"], body > div[style*="height: 2px"], body > div[style*="height: 3px"], body > div[style*="height: 4px"]').forEach(el => {
+    el.style.display = 'none';
+    el.style.visibility = 'hidden';
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+  });
+
+  if (typeof setupCatalogHoverSlides === 'function') {
+    setupCatalogHoverSlides(document);
+  }
+});
+</script>
+
 </body>
 </html>
