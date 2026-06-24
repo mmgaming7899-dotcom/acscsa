@@ -2036,8 +2036,11 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       ? new BroadcastChannel("seala_products_sync_v1")
       : null;
 
+    
     async function loadRemoteCatalog(){
-      if (!SUPABASE_REST_BASE || !SUPABASE_KEY) return [];
+      if (!SUPABASE_REST_BASE || !SUPABASE_KEY) {
+        return { ok: true, data: [] };
+      }
       try {
         const url = new URL(`${SUPABASE_REST_BASE}/${encodeURIComponent(SUPABASE_PRODUCTS_TABLE)}`);
         url.searchParams.set("select", "*");
@@ -2048,36 +2051,36 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        return Array.isArray(data) ? data.map(normalizeProductRecord) : [];
+        return { ok: true, data: Array.isArray(data) ? data.map(normalizeProductRecord) : [] };
       } catch (err) {
         console.warn("Failed to load remote catalog:", err);
-        return [];
+        return { ok: false, data: [] };
       }
     }
 
     async function refreshCatalogFromSupabase(force = false){
-      const remote = await loadRemoteCatalog();
-      if (!Array.isArray(remote) || !remote.length) return false;
-      const local = loadCatalog();
-      const merged = new Map();
-      for (const item of local) {
-        if (item && item.id) merged.set(String(item.id), item);
+      const remoteResult = await loadRemoteCatalog();
+      if (remoteResult.ok) {
+        adminCatalog = Array.isArray(remoteResult.data) ? remoteResult.data.map(normalizeProductRecord) : [];
+        try {
+          if (adminCatalog.length) {
+            localStorage.setItem(LS_KEY, JSON.stringify(adminCatalog));
+          } else {
+            localStorage.removeItem(LS_KEY);
+          }
+        } catch {}
+        syncSiteToPage();
+        return true;
       }
-      for (const item of remote) {
-        if (!item || !item.id) continue;
-        const key = String(item.id);
-        const prev = merged.get(key);
-        if (!prev || Number(item.updatedAt || item.createdAt || item.created_at || 0) >= Number(prev.updatedAt || prev.createdAt || prev.created_at || 0) || force) {
-          merged.set(key, item);
-        }
-      }
-      adminCatalog = Array.from(merged.values()).map(normalizeProductRecord);
-      try { localStorage.setItem(LS_KEY, JSON.stringify(adminCatalog.map(normalizeProductRecord))); } catch {}
+
+      const cached = loadCatalog();
+      adminCatalog = cached.map(normalizeProductRecord);
       syncSiteToPage();
-      return true;
+      return false;
     }
 
     function loadWishlist(){
+
       try {
         const raw = localStorage.getItem(WISHLIST_KEY);
         if (!raw) return [];
@@ -2093,7 +2096,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     }
 
     let site = loadSiteSettings();
-    let adminCatalog = loadCatalog();
+    let adminCatalog = [];
     void refreshCatalogFromSupabase();
 
     const slides = Array.isArray(site.slides) && site.slides.length ? site.slides : DEFAULT_SITE.slides;
@@ -2624,8 +2627,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     }
 
     function getAllProducts(){
-      const staticProducts = CATALOG_PRODUCTS.map(p => normalizeItem(p, "katalog"));
-      const fromAdmin = adminCatalog
+      return adminCatalog
         .map(p => normalizeItem(p, p.order === "best" ? "terlaris" : "terbaru"))
         .sort((a, b) => {
           const latestDiff = Number(b.createdAt || b.created_at || 0) - Number(a.createdAt || a.created_at || 0);
@@ -2635,7 +2637,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           if (rankDiff !== 0) return rankDiff;
           return String(a.name || "").localeCompare(String(b.name || ""));
         });
-      return [...fromAdmin, ...staticProducts];
     }
 
     function renderHero(){
