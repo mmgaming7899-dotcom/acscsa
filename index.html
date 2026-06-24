@@ -2014,6 +2014,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       if (Array.isArray(parsedVideos)) copy.videos = normalizeMediaList(parsedVideos);
       const parsedColors = parseMaybeJsonValue(copy.colors);
       if (Array.isArray(parsedColors)) copy.colors = parsedColors.map(v => String(v || "").trim()).filter(Boolean);
+      if (!copy.stockByColor && copy.stock_by_color) copy.stockByColor = copy.stock_by_color;
       const parsedStockByColor = parseMaybeJsonValue(copy.stockByColor);
       if (parsedStockByColor && typeof parsedStockByColor === "object" && !Array.isArray(parsedStockByColor)) {
         copy.stockByColor = Object.fromEntries(
