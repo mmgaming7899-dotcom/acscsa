@@ -1937,7 +1937,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         const raw = localStorage.getItem(LS_KEY);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.map(compactProductForStorage) : [];
+        return Array.isArray(parsed) ? parsed.map(normalizeProductRecord) : [];
       } catch {
         return [];
       }
@@ -1990,6 +1990,48 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       return payload;
     }
 
+    function parseMaybeJsonValue(value){
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      if (!trimmed) return value;
+      if (!/^[\[{]/.test(trimmed)) return value;
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return value;
+      }
+    }
+
+    function normalizeProductRecord(item){
+      if (!item || typeof item !== "object") return item;
+      const copy = compactProductForStorage(item);
+
+      const parsedImages = parseMaybeJsonValue(copy.images);
+      if (Array.isArray(parsedImages)) copy.images = normalizeMediaList(parsedImages.map(v => String(v)));
+      const parsedGallery = parseMaybeJsonValue(copy.galleryImages);
+      if (Array.isArray(parsedGallery)) copy.galleryImages = normalizeMediaList(parsedGallery.map(v => String(v)));
+      const parsedVideos = parseMaybeJsonValue(copy.videos);
+      if (Array.isArray(parsedVideos)) copy.videos = normalizeMediaList(parsedVideos);
+      const parsedColors = parseMaybeJsonValue(copy.colors);
+      if (Array.isArray(parsedColors)) copy.colors = parsedColors.map(v => String(v || "").trim()).filter(Boolean);
+      const parsedStockByColor = parseMaybeJsonValue(copy.stockByColor);
+      if (parsedStockByColor && typeof parsedStockByColor === "object" && !Array.isArray(parsedStockByColor)) {
+        copy.stockByColor = Object.fromEntries(
+          Object.entries(parsedStockByColor).map(([key, value]) => [String(key), Math.max(0, Number(value || 0))])
+        );
+      }
+      const parsedColorImages = parseMaybeJsonValue(copy.colorImages);
+      if (parsedColorImages && typeof parsedColorImages === "object" && !Array.isArray(parsedColorImages)) {
+        copy.colorImages = compactColorImages(parsedColorImages);
+      }
+
+      copy.stock = Math.max(0, Number(copy.stock || 0));
+      copy.createdAt = Number(copy.createdAt || copy.created_at || Date.now());
+      copy.updatedAt = Number(copy.updatedAt || copy.createdAt || copy.created_at || Date.now());
+
+      return copy;
+    }
+
     const productsBroadcastChannel = ("BroadcastChannel" in window)
       ? new BroadcastChannel("seala_products_sync_v1")
       : null;
@@ -2006,7 +2048,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        return Array.isArray(data) ? data : [];
+        return Array.isArray(data) ? data.map(normalizeProductRecord) : [];
       } catch (err) {
         console.warn("Failed to load remote catalog:", err);
         return [];
@@ -2029,8 +2071,8 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           merged.set(key, item);
         }
       }
-      adminCatalog = Array.from(merged.values()).map(compactProductForStorage);
-      try { localStorage.setItem(LS_KEY, JSON.stringify(adminCatalog.map(compactProductForStorage))); } catch {}
+      adminCatalog = Array.from(merged.values()).map(normalizeProductRecord);
+      try { localStorage.setItem(LS_KEY, JSON.stringify(adminCatalog.map(normalizeProductRecord))); } catch {}
       syncSiteToPage();
       return true;
     }
