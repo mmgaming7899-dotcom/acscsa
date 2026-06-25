@@ -1056,10 +1056,10 @@ lookbookSection:true
 
 <style>
 .hero-dior-hover{
+    display:none !important;
     position:absolute;
     inset:auto 6% 50% 6%;
     z-index:5;
-    display:flex;
     flex-direction:column;
     align-items:center;
     gap:6px;
@@ -1090,8 +1090,9 @@ lookbookSection:true
     opacity:.9;
 }
 .hero-dior-panel:hover .hero-dior-hover{
-    opacity:1;
-    transform:translateY(-50%) scale(1);
+    display:none !important;
+    opacity:0;
+    transform:translateY(-50%) scale(.96);
 }
 .wa-float{
     display:none !important;
@@ -2314,19 +2315,26 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       requestAnimationFrame(update);
     }
 
-    function initHeroVideo(video, { resetOnHover = false, autoPlayOnInit = true } = {}) {
+    function initHeroVideo(video, { resetOnHover = false, autoPlayOnInit = true, playOnHover = false } = {}) {
       if (!video || video.dataset.sealaBound === "1") return;
       video.dataset.sealaBound = "1";
       try {
         video.muted = true;
         video.playsInline = true;
-        video.preload = "auto";
+        video.preload = "metadata";
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
       } catch (e) {}
 
       const safeLoad = () => {
         try { video.load(); } catch (e) {}
+      };
+
+      const safePause = () => {
+        try { video.pause(); } catch (e) {}
+        if (resetOnHover) {
+          try { video.currentTime = 0; } catch (e) {}
+        }
       };
 
       const safePlay = () => {
@@ -2360,15 +2368,36 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         video.style.opacity = "1";
       });
 
-      if (resetOnHover) {
+      if (playOnHover) {
         const host = video.closest('.hero-dior-panel') || video.parentElement;
         if (host && host.dataset.sealaHoverBound !== "1") {
           host.dataset.sealaHoverBound = "1";
-          host.addEventListener("mouseenter", safePlay);
-          host.addEventListener("mouseleave", () => {
-            try { video.pause(); } catch (e) {}
-          });
-          host.addEventListener("touchstart", safePlay, { passive: true });
+
+          const playOnEnter = () => safePlay();
+          const pauseOnLeave = () => safePause();
+          const nearThreshold = 48;
+
+          const moveHandler = (event) => {
+            const rect = host.getBoundingClientRect();
+            const x = event.clientX ?? 0;
+            const y = event.clientY ?? 0;
+            const near =
+              x >= rect.left - nearThreshold &&
+              x <= rect.right + nearThreshold &&
+              y >= rect.top - nearThreshold &&
+              y <= rect.bottom + nearThreshold;
+
+            if (near) {
+              if (video.paused || video.ended) safePlay();
+            } else {
+              if (!video.paused) safePause();
+            }
+          };
+
+          host.addEventListener("pointerenter", playOnEnter);
+          host.addEventListener("pointermove", moveHandler);
+          host.addEventListener("pointerleave", pauseOnLeave);
+          host.addEventListener("touchstart", playOnEnter, { passive: true });
         }
       }
 
@@ -2378,12 +2407,12 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       }
     }
 
-    function initHeroVideos(container, { resetOnHover = false } = {}) {
+    function initHeroVideos(container, { resetOnHover = false, autoPlayOnInit = true, playOnHover = false } = {}) {
       if (!container) return;
-      container.querySelectorAll("video").forEach((video) => initHeroVideo(video, { resetOnHover }));
+      container.querySelectorAll("video").forEach((video) => initHeroVideo(video, { resetOnHover, autoPlayOnInit, playOnHover }));
     }
 
-    function syncSiteToPage() {
+function syncSiteToPage() {
       refreshSiteState();
       renderHero();
       applyNavbarSettings();
@@ -2899,10 +2928,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       heroBg.innerHTML = `
         <div class="hero-dior-panel left" data-side="left">
           ${createMedia(leftMeta, leftSrc, "left")}
-          <div class="hero-dior-hover" aria-hidden="true">
-            <div class="hero-dior-hover-pill">VIEW</div>
-            <div class="hero-dior-hover-sub">HOVER TO PLAY</div>
-          </div>
           <div class="hero-dior-text top-left">
             <span class="hero-dior-kicker">${leftLabel}</span>
             <h2 class="hero-dior-title">${leftTitle}</h2>
@@ -2911,10 +2936,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         </div>
         <div class="hero-dior-panel right" data-side="right">
           ${createMedia(rightMeta, rightSrc, "right")}
-          <div class="hero-dior-hover" aria-hidden="true">
-            <div class="hero-dior-hover-pill">VIEW</div>
-            <div class="hero-dior-hover-sub">HOVER TO PLAY</div>
-          </div>
           <div class="hero-dior-text bottom-right">
             <span class="hero-dior-kicker">${rightLabel}</span>
             <h2 class="hero-dior-title">${rightTitle}</h2>
@@ -2927,7 +2948,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       // FIX: initialize Dior videos through the same safe autoplay path as other modes.
       // Immediate play() after innerHTML swaps can leave a black frame even when the
       // Supabase URL is valid.
-      initHeroVideos(heroBg);
+      initHeroVideos(heroBg, { resetOnHover: true, autoPlayOnInit: false, playOnHover: true });
       const panels = heroBg.querySelectorAll(".hero-dior-panel");
       panels.forEach((panel) => {
         const side = panel.dataset.side; // "left" or "right"
