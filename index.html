@@ -301,30 +301,13 @@
       filter:saturate(.95) contrast(1.02);
       transition:transform .45s ease;
     }
-    .hero-dior-panel:hover .hero-dior-media{transform:scale(1.02);}
+    .hero-dior-panel:hover .hero-dior-media{transform:none;}
     .hero-dior-panel::before{
-      content:"Lihat Koleksi →";
-      position:absolute;
-      bottom:28px;
-      left:50%;
-      transform:translateX(-50%) translateY(8px);
-      z-index:5;
-      color:rgba(255,255,255,0);
-      font-size:11px;
-      font-weight:600;
-      letter-spacing:2px;
-      text-transform:uppercase;
-      white-space:nowrap;
-      transition:color .3s ease, transform .3s ease;
-      pointer-events:none;
+      display:none;
+      content:"";
     }
-    .hero-dior-panel.right::before{
-      content:"Lihat Koleksi ←";
-    }
-    .hero-dior-panel:hover::before{
-      color:rgba(255,255,255,.85);
-      transform:translateX(-50%) translateY(0);
-    }
+    .hero-dior-panel.right::before{content:"";}
+    .hero-dior-panel:hover::before{display:none;}
     .hero-dior-panel::after{
       content:"";
       position:absolute;
@@ -349,11 +332,12 @@
       font-size:clamp(56px, 9vw, 120px);
       letter-spacing:4px;
       text-transform:uppercase;
-      text-shadow:0 12px 40px rgba(0,0,0,.35);
+      text-shadow:0 12px 40px rgba(0,0,0,.52);
       line-height:1;
       pointer-events:none;
       white-space:nowrap;
-      mix-blend-mode:screen;
+      mix-blend-mode:normal;
+      opacity:1;
     }
     .hero-dior-text{
       position:absolute;
@@ -404,22 +388,6 @@
     }
     .hero-dior-panel.left .hero-dior-desc{max-width:34ch;}
     .hero-dior-panel.right .hero-dior-desc{max-width:34ch;}
-    .hero-dior-hover{
-      position:absolute;
-      left:6%;
-      bottom:6%;
-      z-index:4;
-      font-size:12px;
-      letter-spacing:2px;
-      text-transform:uppercase;
-      color:rgba(255,255,255,.78);
-      border:1px solid rgba(255,255,255,.38);
-      border-radius:999px;
-      padding:10px 14px;
-      backdrop-filter:blur(8px);
-      background:rgba(255,255,255,.08);
-      pointer-events:none;
-    }
     @media (max-width: 900px){
       .hero.dior-mode .hero-bg{
         grid-template-columns:1fr;
@@ -2747,7 +2715,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
               ${videoCandidates.map((v) => `<source src="${v}" type="video/mp4">`).join('\n              ')}
               Browser kamu tidak mendukung pemutaran video.
             </video>
-            <div class="hero-dior-hover">Hover to play</div>
           `;
         }
         return `<img class="hero-dior-media" src="${escapeHtml(String(src))}" alt="${escapeHtml(meta.label || side)}">`;
@@ -2786,10 +2753,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       // FIX: initialize Dior videos through the same safe autoplay path as other modes.
       // Immediate play() after innerHTML swaps can leave a black frame even when the
       // Supabase URL is valid.
-      initHeroVideos(heroBg, { resetOnHover: true });
+      initHeroVideos(heroBg, { resetOnHover: false });
       const panels = heroBg.querySelectorAll(".hero-dior-panel");
       panels.forEach((panel) => {
-        const video = panel.querySelector("video");
         const side = panel.dataset.side; // "left" or "right"
 
         // Click: navigate to katalog section filtered by category
@@ -2797,11 +2763,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           const katalogSection = document.getElementById("katalog");
           const catFilter = document.getElementById("filterCategory");
           if (catFilter) {
-            // left panel → leftLabel (e.g. "Atasan"), right panel → rightLabel (e.g. "Bawahan")
             const targetCat = side === "left"
               ? (site.diorLeftLabel || DEFAULT_SITE.diorLeftLabel || "Atasan")
               : (site.diorRightLabel || DEFAULT_SITE.diorRightLabel || "Bawahan");
-            // Try to find matching option (case-insensitive)
             const option = [...catFilter.options].find(
               o => o.value.toLowerCase() === targetCat.toLowerCase()
             );
@@ -2812,19 +2776,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
             katalogSection.scrollIntoView({ behavior: "smooth" });
           }
         });
-
-        if (!video) return;
-        const play = () => {
-          try { video.load(); } catch (e) {}
-          const p = video.play();
-          if (p && typeof p.catch === "function") p.catch(() => {});
-        };
-        const pause = () => {
-          try { video.pause(); } catch (e) {}
-        };
-        panel.addEventListener("mouseenter", play);
-        panel.addEventListener("mouseleave", pause);
-        panel.addEventListener("touchstart", play, { passive: true });
       });
     }
 
