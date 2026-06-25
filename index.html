@@ -1692,7 +1692,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       bestTitle: "Produk Terlaris",
       slides: [
         "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=80",
-        "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1600&q=80",
+        { type: "video", src: "0608 (2)(2).mp4", label: "SEALA Video" },
         "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1600&q=80"
       ]
     };
@@ -2523,19 +2523,12 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       });
     }
 
-    function isValidMediaUrl(value){
-      const url = String(value || "").trim();
-      return /^(https?:|data:|blob:)/i.test(url);
-    }
-
     async function resolveSlideSource(slide, fallback = ""){
       const meta = slide && typeof slide === "object" ? slide : { src: slide };
       const preview = String(meta.previewUrl || "").trim();
       const src = String(meta.src || meta.url || meta.image || "").trim();
-
-      if (preview && isValidMediaUrl(preview)) return preview;
-      if (src && isValidMediaUrl(src)) return src;
-
+      if (preview && !preview.startsWith("blob:")) return preview;
+      if (src && !src.startsWith("blob:")) return src;
       if (meta.mediaId) {
         if (MEDIA_URL_CACHE.has(meta.mediaId)) return MEDIA_URL_CACHE.get(meta.mediaId);
         const record = await getMediaRecord(meta.mediaId);
@@ -2545,7 +2538,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           return url;
         }
       }
-
       return fallback;
     }
 
@@ -2749,8 +2741,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       const createMedia = (meta, src, side) => {
         if (meta.type === "video" && src) {
           const videoCandidates = [assetUrl(src), assetUrl(String(src).replace(/ /g, '%20'))].filter(Boolean);
+          const posterAttr = meta.poster ? `poster="${escapeHtml(meta.poster)}"` : `poster="${PLACEHOLDER_IMAGE}"`;
           return `
-            <video class="hero-dior-media" preload="auto" autoplay muted playsinline loop ${meta.poster ? `poster="${escapeHtml(meta.poster)}"` : ""} aria-hidden="true">
+            <video class="hero-dior-media" preload="auto" autoplay muted playsinline loop ${posterAttr} aria-hidden="true">
               ${videoCandidates.map((v) => `<source src="${v}" type="video/mp4">`).join('\n              ')}
               Browser kamu tidak mendukung pemutaran video.
             </video>
@@ -2790,12 +2783,10 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         <div class="hero-dior-brand">${centerText}</div>
       `;
 
-      const videos = heroBg.querySelectorAll("video");
-      videos.forEach((video) => {
-        try { video.load(); } catch (e) {}
-        const p = video.play();
-        if (p && typeof p.catch === "function") p.catch(() => {});
-      });
+      // FIX: initialize Dior videos through the same safe autoplay path as other modes.
+      // Immediate play() after innerHTML swaps can leave a black frame even when the
+      // Supabase URL is valid.
+      initHeroVideos(heroBg, { resetOnHover: true });
       const panels = heroBg.querySelectorAll(".hero-dior-panel");
       panels.forEach((panel) => {
         const video = panel.querySelector("video");
@@ -3513,6 +3504,15 @@ document.addEventListener('click', function(e){
 </script>
 
   <a class="wa-float" target="_blank" rel="noopener noreferrer" href="https://wa.me/6287856088414?text=Halo%20SEALA%2C%20saya%20ingin%20bertanya%20atau%20pesan%20produk.">WhatsApp</a>
+
+
+<!-- SEALA Uploaded Landing Video -->
+<div id="seala-video-banner" style="max-width:900px;margin:40px auto;padding:0 15px;">
+  <video autoplay muted loop playsinline controls style="width:100%;border-radius:16px;">
+    <source src="./0608 (2)(2).mp4" type="video/mp4">
+    <source src="./0608%20(2)(2).mp4" type="video/mp4">
+  </video>
+</div>
 
 
 <script>
