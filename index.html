@@ -878,7 +878,11 @@
       padding-right:52px;
     }
     .modal-thumb{
-      width:96px;height:80px;border-radius:18px;object-fit:cover;background:#f2f2f2;flex:none;
+      width:96px;height:80px;border-radius:18px;background:#f2f2f2;flex:none;overflow:hidden;position:relative;
+    }
+    .modal-thumb img,
+    .modal-thumb video{
+      width:100%;height:100%;display:block;object-fit:cover;
     }
     .modal-title{font-size:22px;margin-bottom:6px}
     .modal-price{font-weight:800;color:var(--blue);margin-top:6px}
@@ -1567,7 +1571,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     <div class="buy-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <button class="modal-close" id="modalClose" aria-label="Tutup modal">✕</button>
       <div class="modal-head">
-        <img id="modalImage" class="modal-thumb" alt="Preview produk">
+        <div id="modalImage" class="modal-thumb" aria-label="Preview produk"></div>
         <div>
           <h3 class="modal-title" id="modalTitle">Beli Sekarang</h3>
           <div id="modalCategory" style="color:#666;font-size:13px;font-weight:700;"></div>
@@ -1660,7 +1664,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       bestTitle: "Produk Terlaris",
       slides: [
         "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=80",
-        { type: "video", src: "0608 (2)(2).mp4", label: "SEALA Video" },
+        "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1600&q=80",
         "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1600&q=80"
       ]
     };
@@ -1776,6 +1780,11 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     const modalClose = document.getElementById("modalClose");
     const modalCancel = document.getElementById("modalCancel");
     const modalImage = document.getElementById("modalImage");
+    function setModalMedia(product, color){
+      if (!modalImage) return;
+      const mediaProduct = product && color ? { ...product, image: getProductImageForColor(product, color) || product.image || "" } : product;
+      modalImage.innerHTML = renderProductMedia(mediaProduct, { className: "modal-media", alt: mediaProduct?.name || "Preview produk", autoplay: true, muted: true, loop: true, controls: false, playsInline: true, preload: "metadata" });
+    }
     const modalTitle = document.getElementById("modalTitle");
     const modalCategory = document.getElementById("modalCategory");
     const modalPrice = document.getElementById("modalPrice");
@@ -2004,6 +2013,8 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       copy.stock = Math.max(0, Number(copy.stock || 0));
       copy.createdAt = Number(copy.createdAt || copy.created_at || Date.now());
       copy.updatedAt = Number(copy.updatedAt || copy.createdAt || copy.created_at || Date.now());
+      copy.shopeeLink = String(copy.shopeeLink || copy.shopee_link || copy.shopee_url || copy.link_shopee || copy.shopeeUrl || "").trim();
+      copy.tiktokLink = String(copy.tiktokLink || copy.tiktok_link || copy.tiktok_url || copy.link_tiktok || copy.tiktokUrl || "").trim();
 
       return copy;
     }
@@ -2537,9 +2548,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         care: item.care || "Cuci dengan lembut.",
         sizeChartImage: item.sizeChartImage || item.sizechart || "",
         sizes: Array.isArray(item.sizes) && item.sizes.length ? item.sizes : ["S", "M", "L", "XL"],
-        shopeeLink: item.shopeeLink || item.shopee_link || "",
-        tiktokLink: item.tiktokLink || item.tiktok_link || "",
-        videos: Array.isArray(item.videos) ? item.videos.filter(Boolean) : [],
+        shopeeLink: item.shopeeLink || item.shopee_link || item.shopee_url || item.link_shopee || "",
+        tiktokLink: item.tiktokLink || item.tiktok_link || item.tiktok_url || item.link_tiktok || "",
+        videos: Array.isArray(item.videos) ? item.videos.filter(Boolean) : (Array.isArray(item.video) ? item.video.filter(Boolean) : []),
         createdAt: Number(item.createdAt || item.created_at || 0),
         updatedAt: Number(item.updatedAt || item.createdAt || item.created_at || 0),
         order: item.order || "regular",
@@ -2607,6 +2618,59 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       }
 
       return images.filter(Boolean);
+    }
+
+
+    function getProductVideoSources(product){
+      const sources = [];
+      const push = (value) => {
+        const url = String(value || "").trim();
+        if (url && !sources.includes(url)) sources.push(url);
+      };
+
+      if (!product) return sources;
+
+      if (Array.isArray(product.videos)) product.videos.forEach(push);
+      if (Array.isArray(product.video)) product.video.forEach(push);
+      if (typeof product.video === "string") push(product.video);
+      if (typeof product.videoUrl === "string") push(product.videoUrl);
+      if (typeof product.video_url === "string") push(product.video_url);
+      if (typeof product.mediaUrl === "string") push(product.mediaUrl);
+      if (typeof product.media_url === "string") push(product.media_url);
+
+      return sources.filter(Boolean);
+    }
+
+    function getProductPrimaryMedia(product){
+      const videos = getProductVideoSources(product);
+      if (videos.length) {
+        const preview = getProductGalleryImages(product)[0] || getProductCardImage(product) || "";
+        return { type: "video", src: videos[0], poster: preview };
+      }
+      const image = getProductGalleryImages(product)[0] || getProductCardImage(product) || "";
+      return { type: "image", src: image };
+    }
+
+    function renderProductMedia(product, {
+      className = "gallery-main",
+      alt = "Produk SEALA",
+      autoplay = true,
+      muted = true,
+      loop = true,
+      controls = false,
+      playsInline = true,
+      preload = "auto",
+      showFallback = ""
+    } = {}){
+      const media = getProductPrimaryMedia(product);
+      const src = String(media.src || "").trim();
+      if (!src) return showFallback;
+
+      if (media.type === "video") {
+        const poster = media.poster ? ` poster="${escapeHtml(media.poster)}"` : "";
+        return `<video class="${className}" ${autoplay ? "autoplay" : ""} ${muted ? "muted" : ""} ${loop ? "loop" : ""} ${controls ? "controls" : ""} ${playsInline ? "playsinline webkit-playsinline" : ""} preload="${escapeHtml(preload)}"${poster}><source src="${escapeHtml(src)}" type="video/mp4">Browser kamu tidak mendukung pemutaran video.</video>`;
+      }
+      return `<img class="${className}" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
     }
 
     function getAllProducts(){
@@ -2929,7 +2993,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     function cardTemplate(item){
       const isWish = wishlist.has(item.id);
       const gallery = getProductGalleryImages(item);
-      const primaryImage = gallery[0] || getProductCardImage(item) || "";
       const galleryData = escapeHtml(JSON.stringify(gallery));
       const totalStock = getProductTotalStock(item);
       const isLatest = item.order === "new";
@@ -2941,7 +3004,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           </div>
           <div class="product-img product-gallery" data-gallery='${galleryData}'>
             ${totalStock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
-            <img class="gallery-main" src="${escapeHtml(primaryImage)}" alt="${escapeHtml(item.name || "Produk SEALA")}">
+            ${renderProductMedia(item, { className: "gallery-main", alt: item.name || "Produk SEALA", autoplay: true, muted: true, loop: true, controls: false, playsInline: true, preload: "metadata" })}
             ${isLatest ? `<div class="badge latest">TERBARU</div>` : ``}
             ${gallery.length > 1 ? `
               
@@ -2999,7 +3062,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       wishlistProducts.innerHTML = products.length
         ? products.map(item => {
             const gallery = getProductGalleryImages(item);
-            const primaryImage = gallery[0] || getProductCardImage(item) || "";
             const galleryData = escapeHtml(JSON.stringify(gallery));
             const totalStock = getProductTotalStock(item);
             const isLatest = item.order === "new";
@@ -3010,7 +3072,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
               </div>
               <div class="product-img product-gallery" data-gallery='${galleryData}'>
                 ${totalStock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
-                <img class="gallery-main" src="${escapeHtml(primaryImage)}" alt="${escapeHtml(item.name || "Produk SEALA")}">
+                ${renderProductMedia(item, { className: "gallery-main", alt: item.name || "Produk SEALA", autoplay: true, muted: true, loop: true, controls: false, playsInline: true, preload: "metadata" })}
                 ${isLatest ? `<div class="badge latest">TERBARU</div>` : ``}
                 ${gallery.length > 1 ? `
                   
@@ -3062,7 +3124,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 
         const img = gallery.querySelector('.gallery-main');
         const dots = Array.from(gallery.querySelectorAll('.gallery-dot'));
-        if (!img) return;
+        if (!img || !(img instanceof HTMLImageElement)) return;
 
         let timer = null;
         let index = 0;
@@ -3269,7 +3331,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       activeProduct = product;
       selectedColor = getAvailableColor(product);
 
-      modalImage.src = getProductGalleryImages(product)[0] || product.image || "";
+      setModalMedia(product, selectedColor);
       modalTitle.textContent = product.name || "Beli Sekarang";
       modalCategory.textContent = product.category || "Produk SEALA";
       modalPrice.textContent = rupiah(product.price || 0);
@@ -3299,7 +3361,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           selectedColor = btn.dataset.color;
           modalColors.querySelectorAll(".color-pill").forEach(el => el.classList.remove("active"));
           btn.classList.add("active");
-          modalImage.src = getProductImageForColor(activeProduct, selectedColor) || activeProduct.image || "";
+          setModalMedia(activeProduct, selectedColor);
           modalDetails.innerHTML = `
             <div class="detail-item"><strong>Bahan:</strong> ${escapeHtml(activeProduct.material || "-")}</div>
             <div class="detail-item"><strong>Fit:</strong> ${escapeHtml(activeProduct.fit || "-")}</div>
@@ -3458,14 +3520,6 @@ document.addEventListener('click', function(e){
 
 
 <!-- SEALA Uploaded Landing Video -->
-<div id="seala-video-banner" style="max-width:900px;margin:40px auto;padding:0 15px;">
-  <video autoplay muted loop playsinline controls style="width:100%;border-radius:16px;">
-    <source src="./0608 (2)(2).mp4" type="video/mp4">
-    <source src="./0608%20(2)(2).mp4" type="video/mp4">
-  </video>
-</div>
-
-
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('h1,h2,h3,h4,p,.hero-content,.hero-text,.section-title,.product-card,.article-card')
