@@ -1692,7 +1692,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       bestTitle: "Produk Terlaris",
       slides: [
         "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=80",
-        { type: "video", src: "0608 (2)(2).mp4", label: "SEALA Video" },
+        "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1600&q=80",
         "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1600&q=80"
       ]
     };
@@ -2033,9 +2033,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         copy.colorImages = compactColorImages(parsedColorImages);
       }
 
-      copy.shopeeLink = String(copy.shopeeLink || copy.shopee_link || copy.shopee_url || copy.link_shopee || "").trim();
-      copy.tiktokLink = String(copy.tiktokLink || copy.tiktok_link || copy.tiktok_url || copy.link_tiktok || "").trim();
-
       copy.stock = Math.max(0, Number(copy.stock || 0));
       copy.createdAt = Number(copy.createdAt || copy.created_at || Date.now());
       copy.updatedAt = Number(copy.updatedAt || copy.createdAt || copy.created_at || Date.now());
@@ -2081,14 +2078,12 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           }
         } catch {}
         syncSiteToPage();
-        refreshActiveProductBindings();
         return true;
       }
 
       const cached = loadCatalog();
       adminCatalog = cached.map(normalizeProductRecord);
       syncSiteToPage();
-      refreshActiveProductBindings();
       return false;
     }
 
@@ -2528,12 +2523,19 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       });
     }
 
+    function isValidMediaUrl(value){
+      const url = String(value || "").trim();
+      return /^(https?:|data:|blob:)/i.test(url);
+    }
+
     async function resolveSlideSource(slide, fallback = ""){
       const meta = slide && typeof slide === "object" ? slide : { src: slide };
       const preview = String(meta.previewUrl || "").trim();
       const src = String(meta.src || meta.url || meta.image || "").trim();
-      if (preview && !preview.startsWith("blob:")) return preview;
-      if (src && !src.startsWith("blob:")) return src;
+
+      if (preview && isValidMediaUrl(preview)) return preview;
+      if (src && isValidMediaUrl(src)) return src;
+
       if (meta.mediaId) {
         if (MEDIA_URL_CACHE.has(meta.mediaId)) return MEDIA_URL_CACHE.get(meta.mediaId);
         const record = await getMediaRecord(meta.mediaId);
@@ -2543,6 +2545,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           return url;
         }
       }
+
       return fallback;
     }
 
@@ -3264,44 +3267,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       return getAllProducts().find(item => String(item.id).toLowerCase() === String(key).toLowerCase()) || null;
     }
 
-    function refreshActiveProductBindings(){
-      if (!activeProduct) return;
-      const fresh = findProductByKey(activeProduct.id);
-      if (!fresh) return;
-
-      activeProduct = fresh;
-      if (!(Array.isArray(activeProduct.colors) && activeProduct.colors.includes(selectedColor))) {
-        selectedColor = getAvailableColor(activeProduct);
-      }
-
-      modalImage.src = getProductImageForColor(activeProduct, selectedColor) || activeProduct.image || "";
-      modalTitle.textContent = activeProduct.name || "Beli Sekarang";
-      modalCategory.textContent = activeProduct.category || "Produk SEALA";
-      modalPrice.textContent = rupiah(activeProduct.price || 0);
-      modalDesc.textContent = activeProduct.desc || "";
-      modalDetails.innerHTML = `
-        <div class="detail-item"><strong>Bahan:</strong> ${escapeHtml(activeProduct.material || "-")}</div>
-        <div class="detail-item"><strong>Fit:</strong> ${escapeHtml(activeProduct.fit || "-")}</div>
-        <div class="detail-item"><strong>Perawatan:</strong> ${escapeHtml(activeProduct.care || "-")}</div>
-        <div class="detail-item"><strong>Stok total:</strong> ${getProductTotalStock(activeProduct)}</div>
-        <div class="detail-item"><strong>Stok ${escapeHtml(selectedColor)}:</strong> ${getStockByColor(activeProduct, selectedColor)}</div>
-      `;
-      renderSizeChartVisual(activeProduct);
-      updateBuyLinks();
-    }
-
     function buildMessage(){
       if (!activeProduct) return "";
       return `Halo SEALA, saya ingin beli ${activeProduct.name} warna ${selectedColor}. Harga ${rupiah(activeProduct.price || 0)}.`;
-    }
-
-    function resolveMarketplaceLink(product, ...keys){
-      if (!product || typeof product !== "object") return "";
-      for (const key of keys) {
-        const value = String(product[key] || "").trim();
-        if (value) return value;
-      }
-      return "";
     }
 
     function updateBuyLinks(){
@@ -3309,12 +3277,17 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 
       const productQuery = encodeURIComponent(`${activeProduct.name} ${selectedColor}`);
       const message = encodeURIComponent(buildMessage());
-      const shopeeLink = resolveMarketplaceLink(activeProduct, "shopeeLink", "shopee_link", "shopee_url", "link_shopee");
-      const tiktokLink = resolveMarketplaceLink(activeProduct, "tiktokLink", "tiktok_link", "tiktok_url", "link_tiktok");
 
       modalBuyWA.href = `https://wa.me/${WA_NUMBER}?text=${message}`;
-      modalBuyShopee.href = shopeeLink || `https://shopee.co.id/search?keyword=${productQuery}`;
-      modalBuyTikTok.href = tiktokLink || `https://www.tiktok.com/search?q=${productQuery}`;
+      modalBuyShopee.href =
+        activeProduct.shopeeLink?.trim()
+          ? activeProduct.shopeeLink
+          : `https://shopee.co.id/search?keyword=${productQuery}`;
+
+      modalBuyTikTok.href =
+        activeProduct.tiktokLink?.trim()
+          ? activeProduct.tiktokLink
+          : `https://www.tiktok.com/search?q=${productQuery}`;
     }
 
     function renderSizeChartVisual(product){
@@ -3540,15 +3513,6 @@ document.addEventListener('click', function(e){
 </script>
 
   <a class="wa-float" target="_blank" rel="noopener noreferrer" href="https://wa.me/6287856088414?text=Halo%20SEALA%2C%20saya%20ingin%20bertanya%20atau%20pesan%20produk.">WhatsApp</a>
-
-
-<!-- SEALA Uploaded Landing Video -->
-<div id="seala-video-banner" style="max-width:900px;margin:40px auto;padding:0 15px;">
-  <video autoplay muted loop playsinline controls style="width:100%;border-radius:16px;">
-    <source src="./0608 (2)(2).mp4" type="video/mp4">
-    <source src="./0608%20(2)(2).mp4" type="video/mp4">
-  </video>
-</div>
 
 
 <script>
