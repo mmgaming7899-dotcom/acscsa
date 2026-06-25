@@ -1055,7 +1055,44 @@ lookbookSection:true
 </script>
 
 <style>
-.hero-dior-hover,
+.hero-dior-hover{
+    position:absolute;
+    inset:auto 6% 50% 6%;
+    z-index:5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    opacity:0;
+    transition:opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+    color:#fff;
+    text-align:center;
+    transform:translateY(-50%) scale(.96);
+    text-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.hero-dior-hover .hero-dior-hover-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 18px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.28);
+    background:rgba(0,0,0,.22);
+    backdrop-filter:blur(8px);
+    font-size:12px;
+    letter-spacing:4px;
+    font-weight:800;
+}
+.hero-dior-hover .hero-dior-hover-sub{
+    font-size:11px;
+    letter-spacing:1.6px;
+    opacity:.9;
+}
+.hero-dior-panel:hover .hero-dior-hover{
+    opacity:1;
+    transform:translateY(-50%) scale(1);
+}
 .wa-float{
     display:none !important;
 }
@@ -1953,14 +1990,45 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       return out;
     }
 
+    function normalizeGalleryEntries(value){
+      const entries = Array.isArray(value) ? value : [];
+      return entries.map((entry) => {
+        if (typeof entry === "string") {
+          const url = entry.trim();
+          if (!url) return null;
+          return {
+            type: /\.(mp4|webm|ogg)(\?|#|$)/i.test(url) || /^data:video\//i.test(url) ? "video" : "image",
+            url,
+            poster: "",
+            label: ""
+          };
+        }
+        if (!entry || typeof entry !== "object") return null;
+        const url = String(entry.url || entry.src || entry.media_url || "").trim();
+        if (!url) return null;
+        const type = String(entry.type || entry.mediaType || "").toLowerCase().startsWith("video")
+          ? "video"
+          : (/\.(mp4|webm|ogg)(\?|#|$)/i.test(url) || /^data:video\//i.test(url) ? "video" : "image");
+        return {
+          type,
+          url,
+          poster: String(entry.poster || entry.thumb || "").trim(),
+          label: String(entry.label || entry.title || "").trim()
+        };
+      }).filter(Boolean);
+    }
+
     function compactProductForStorage(item){
       if (!item || typeof item !== "object") return item;
       const copy = { ...item };
       if (typeof copy.image === "string" && isInlineMediaValue(copy.image)) copy.image = "";
+      if (typeof copy.coverImage === "string" && isInlineMediaValue(copy.coverImage)) copy.coverImage = "";
+      if (typeof copy.cover_image === "string" && isInlineMediaValue(copy.cover_image)) copy.cover_image = "";
       if (typeof copy.sizeChartImage === "string" && isInlineMediaValue(copy.sizeChartImage)) copy.sizeChartImage = "";
       copy.images = normalizeMediaList(copy.images);
       copy.galleryImages = normalizeMediaList(copy.galleryImages);
       copy.videos = normalizeMediaList(copy.videos);
+      copy.gallery = normalizeGalleryEntries(copy.gallery);
       if (copy.colorImages) copy.colorImages = compactColorImages(copy.colorImages);
       if (copy.transform && typeof copy.transform === "object") copy.transform = { ...copy.transform };
       return copy;
@@ -1992,10 +2060,20 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 
       const parsedImages = parseMaybeJsonValue(copy.images);
       if (Array.isArray(parsedImages)) copy.images = normalizeMediaList(parsedImages.map(v => String(v)));
-      const parsedGallery = parseMaybeJsonValue(copy.galleryImages);
-      if (Array.isArray(parsedGallery)) copy.galleryImages = normalizeMediaList(parsedGallery.map(v => String(v)));
+      const parsedGalleryImages = parseMaybeJsonValue(copy.galleryImages);
+      if (Array.isArray(parsedGalleryImages)) copy.galleryImages = normalizeMediaList(parsedGalleryImages.map(v => String(v)));
       const parsedVideos = parseMaybeJsonValue(copy.videos);
       if (Array.isArray(parsedVideos)) copy.videos = normalizeMediaList(parsedVideos);
+      const parsedGallery = parseMaybeJsonValue(copy.gallery);
+      if (Array.isArray(parsedGallery)) {
+        copy.gallery = normalizeGalleryEntries(parsedGallery);
+      } else {
+        copy.gallery = normalizeGalleryEntries([
+          ...(Array.isArray(copy.galleryImages) ? copy.galleryImages : []).map(url => ({ type: "image", url })),
+          ...(Array.isArray(copy.images) ? copy.images : []).map(url => ({ type: "image", url })),
+          ...(Array.isArray(copy.videos) ? copy.videos : []).map(url => ({ type: "video", url }))
+        ]);
+      }
       const parsedColors = parseMaybeJsonValue(copy.colors);
       if (Array.isArray(parsedColors)) copy.colors = parsedColors.map(v => String(v || "").trim()).filter(Boolean);
       if (!copy.stockByColor && copy.stock_by_color) copy.stockByColor = copy.stock_by_color;
@@ -2013,8 +2091,12 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       copy.stock = Math.max(0, Number(copy.stock || 0));
       copy.createdAt = Number(copy.createdAt || copy.created_at || Date.now());
       copy.updatedAt = Number(copy.updatedAt || copy.createdAt || copy.created_at || Date.now());
+      copy.coverImage = String(copy.coverImage || copy.cover_image || copy.image || copy.images?.[0] || "").trim();
+      copy.cover_image = copy.coverImage;
+      copy.image = String(copy.image || copy.coverImage || copy.images?.[0] || "").trim();
       copy.shopeeLink = String(copy.shopeeLink || copy.shopee_link || copy.shopee_url || copy.link_shopee || copy.shopeeUrl || "").trim();
       copy.tiktokLink = String(copy.tiktokLink || copy.tiktok_link || copy.tiktok_url || copy.link_tiktok || copy.tiktokUrl || "").trim();
+      copy.whatsappLink = String(copy.whatsappLink || copy.whatsapp_link || copy.whatsapp_url || copy.link_whatsapp || "").trim();
 
       return copy;
     }
@@ -2232,7 +2314,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       requestAnimationFrame(update);
     }
 
-    function initHeroVideo(video, { resetOnHover = false } = {}) {
+    function initHeroVideo(video, { resetOnHover = false, autoPlayOnInit = true } = {}) {
       if (!video || video.dataset.sealaBound === "1") return;
       video.dataset.sealaBound = "1";
       try {
@@ -2291,7 +2373,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       }
 
       safeLoad();
-      setTimeout(safePlay, 120);
+      if (autoPlayOnInit) {
+        setTimeout(safePlay, 120);
+      }
     }
 
     function initHeroVideos(container, { resetOnHover = false } = {}) {
@@ -2590,12 +2674,12 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       const colorKey = color || (Array.isArray(product.colors) ? product.colors[0] : "");
       if (product.colorImages && colorKey && product.colorImages[colorKey]) return product.colorImages[colorKey];
       if (product.colorImages && product.colorImages.default) return product.colorImages.default;
-      return product.image || "";
+      return product.cover_image || product.coverImage || product.image || "";
     }
 
     function getProductCardImage(product){
       const primaryColor = Array.isArray(product?.colors) ? product.colors[0] : "";
-      return product?.image || getProductImageForColor(product, primaryColor) || "";
+      return product?.cover_image || product?.coverImage || product?.image || getProductImageForColor(product, primaryColor) || "";
     }
 
     function getProductGalleryImages(product){
@@ -2608,7 +2692,17 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       if (!product) return images;
 
       push(getProductCardImage(product));
+      push(product.cover_image);
+      push(product.coverImage);
       push(product.image);
+
+      if (Array.isArray(product.gallery)) {
+        product.gallery.forEach((entry) => {
+          if (!entry || typeof entry !== "object") return;
+          if (String(entry.type || "").toLowerCase().startsWith("video")) return;
+          push(entry.url || entry.src || entry.media_url || "");
+        });
+      }
 
       if (Array.isArray(product.galleryImages)) product.galleryImages.forEach(push);
       if (Array.isArray(product.images)) product.images.forEach(push);
@@ -2630,6 +2724,14 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 
       if (!product) return sources;
 
+      if (Array.isArray(product.gallery)) {
+        product.gallery.forEach((entry) => {
+          if (!entry || typeof entry !== "object") return;
+          if (!String(entry.type || "").toLowerCase().startsWith("video")) return;
+          push(entry.url || entry.src || entry.media_url || "");
+        });
+      }
+
       if (Array.isArray(product.videos)) product.videos.forEach(push);
       if (Array.isArray(product.video)) product.video.forEach(push);
       if (typeof product.video === "string") push(product.video);
@@ -2644,10 +2746,10 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     function getProductPrimaryMedia(product){
       const videos = getProductVideoSources(product);
       if (videos.length) {
-        const preview = getProductGalleryImages(product)[0] || getProductCardImage(product) || "";
+        const preview = getProductCardImage(product) || getProductGalleryImages(product)[0] || "";
         return { type: "video", src: videos[0], poster: preview };
       }
-      const image = getProductGalleryImages(product)[0] || getProductCardImage(product) || "";
+      const image = getProductCardImage(product) || getProductGalleryImages(product)[0] || "";
       return { type: "image", src: image };
     }
 
@@ -2775,7 +2877,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           const videoCandidates = [assetUrl(src), assetUrl(String(src).replace(/ /g, '%20'))].filter(Boolean);
           const posterAttr = meta.poster ? `poster="${escapeHtml(meta.poster)}"` : `poster="${PLACEHOLDER_IMAGE}"`;
           return `
-            <video class="hero-dior-media" preload="auto" autoplay muted playsinline loop ${posterAttr} aria-hidden="true">
+            <video class="hero-dior-media" preload="auto" muted playsinline loop ${posterAttr} aria-hidden="true">
               ${videoCandidates.map((v) => `<source src="${v}" type="video/mp4">`).join('\n              ')}
               Browser kamu tidak mendukung pemutaran video.
             </video>
@@ -2797,6 +2899,10 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       heroBg.innerHTML = `
         <div class="hero-dior-panel left" data-side="left">
           ${createMedia(leftMeta, leftSrc, "left")}
+          <div class="hero-dior-hover" aria-hidden="true">
+            <div class="hero-dior-hover-pill">VIEW</div>
+            <div class="hero-dior-hover-sub">HOVER TO PLAY</div>
+          </div>
           <div class="hero-dior-text top-left">
             <span class="hero-dior-kicker">${leftLabel}</span>
             <h2 class="hero-dior-title">${leftTitle}</h2>
@@ -2805,6 +2911,10 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         </div>
         <div class="hero-dior-panel right" data-side="right">
           ${createMedia(rightMeta, rightSrc, "right")}
+          <div class="hero-dior-hover" aria-hidden="true">
+            <div class="hero-dior-hover-pill">VIEW</div>
+            <div class="hero-dior-hover-sub">HOVER TO PLAY</div>
+          </div>
           <div class="hero-dior-text bottom-right">
             <span class="hero-dior-kicker">${rightLabel}</span>
             <h2 class="hero-dior-title">${rightTitle}</h2>
@@ -2817,7 +2927,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       // FIX: initialize Dior videos through the same safe autoplay path as other modes.
       // Immediate play() after innerHTML swaps can leave a black frame even when the
       // Supabase URL is valid.
-      initHeroVideos(heroBg, { resetOnHover: false });
+      initHeroVideos(heroBg);
       const panels = heroBg.querySelectorAll(".hero-dior-panel");
       panels.forEach((panel) => {
         const side = panel.dataset.side; // "left" or "right"
@@ -2883,7 +2993,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 
       heroBg.innerHTML = items.join("");
       heroBg.style.overflow = 'visible';
-      initHeroVideos(heroBg, { resetOnHover: false });
+      initHeroVideos(heroBg, { resetOnHover: true, autoPlayOnInit: false });
       if (slideLabel) {
         slideLabel.textContent = `Scroll Bertumpuk / ${slides.length}`;
       }
@@ -3004,7 +3114,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           </div>
           <div class="product-img product-gallery" data-gallery='${galleryData}'>
             ${totalStock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
-            ${renderProductMedia(item, { className: "gallery-main", alt: item.name || "Produk SEALA", autoplay: true, muted: true, loop: true, controls: false, playsInline: true, preload: "metadata" })}
+            ${`<img class="gallery-main" src="${escapeHtml(getProductCardImage(item) || "")}" alt="${escapeHtml(item.name || "Produk SEALA")}">`}
             ${isLatest ? `<div class="badge latest">TERBARU</div>` : ``}
             ${gallery.length > 1 ? `
               
@@ -3072,7 +3182,7 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
               </div>
               <div class="product-img product-gallery" data-gallery='${galleryData}'>
                 ${totalStock <= 0 ? `<div class="stock-overlay"><div class="stock-badge">HABIS</div></div>` : ``}
-                ${renderProductMedia(item, { className: "gallery-main", alt: item.name || "Produk SEALA", autoplay: true, muted: true, loop: true, controls: false, playsInline: true, preload: "metadata" })}
+                ${`<img class="gallery-main" src="${escapeHtml(getProductCardImage(item) || "")}" alt="${escapeHtml(item.name || "Produk SEALA")}">`}
                 ${isLatest ? `<div class="badge latest">TERBARU</div>` : ``}
                 ${gallery.length > 1 ? `
                   
