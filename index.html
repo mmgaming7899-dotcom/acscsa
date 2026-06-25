@@ -1849,10 +1849,17 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       // localStorage and admin changes to btn1Text are silently ignored.
       return {
         ...data,
+        btn1Text: data.btn1Text || data.primaryBtn || DEFAULT_SITE.primaryBtn,
+        btn1Link: data.btn1Link || data.primaryLink || DEFAULT_SITE.primaryLink,
+        btn2Text: data.btn2Text || data.secondaryBtn || DEFAULT_SITE.secondaryBtn,
+        btn2Link: data.btn2Link || data.secondaryLink || DEFAULT_SITE.secondaryLink,
         primaryBtn: data.btn1Text || data.primaryBtn || DEFAULT_SITE.primaryBtn,
         secondaryBtn: data.btn2Text || data.secondaryBtn || DEFAULT_SITE.secondaryBtn,
         primaryLink: data.btn1Link || data.primaryLink || DEFAULT_SITE.primaryLink,
         secondaryLink: data.btn2Link || data.secondaryLink || DEFAULT_SITE.secondaryLink,
+        orderWhatsAppLink: data.orderWhatsAppLink || DEFAULT_SITE.orderWhatsAppLink,
+        orderShopeeLink: data.orderShopeeLink || DEFAULT_SITE.orderShopeeLink,
+        orderTiktokLink: data.orderTiktokLink || DEFAULT_SITE.orderTiktokLink,
         navLogoSize: Number(data.navLogoSize ?? DEFAULT_SITE.navLogoSize ?? 130),
         navBarHeight: Number(data.navBarHeight ?? DEFAULT_SITE.navBarHeight ?? 80),
         landingMode: String(data.landingMode || DEFAULT_SITE.landingMode || "slider"),
@@ -2133,10 +2140,17 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
           ...site,
           ...remote,
           updatedAt: Number(remote.updatedAt || site.updatedAt || 0),
+          btn1Text: remote.btn1Text || remote.primaryBtn || site.btn1Text || site.primaryBtn || DEFAULT_SITE.primaryBtn,
+          btn1Link: remote.btn1Link || remote.primaryLink || site.btn1Link || site.primaryLink || DEFAULT_SITE.primaryLink,
+          btn2Text: remote.btn2Text || remote.secondaryBtn || site.btn2Text || site.secondaryBtn || DEFAULT_SITE.secondaryBtn,
+          btn2Link: remote.btn2Link || remote.secondaryLink || site.btn2Link || site.secondaryLink || DEFAULT_SITE.secondaryLink,
           primaryBtn: remote.primaryBtn || remote.btn1Text || site.primaryBtn || DEFAULT_SITE.primaryBtn,
           secondaryBtn: remote.secondaryBtn || remote.btn2Text || site.secondaryBtn || DEFAULT_SITE.secondaryBtn,
           primaryLink: remote.primaryLink || remote.btn1Link || site.primaryLink || DEFAULT_SITE.primaryLink,
           secondaryLink: remote.secondaryLink || remote.btn2Link || site.secondaryLink || DEFAULT_SITE.secondaryLink,
+          orderWhatsAppLink: remote.orderWhatsAppLink || site.orderWhatsAppLink || DEFAULT_SITE.orderWhatsAppLink,
+          orderShopeeLink: remote.orderShopeeLink || site.orderShopeeLink || DEFAULT_SITE.orderShopeeLink,
+          orderTiktokLink: remote.orderTiktokLink || site.orderTiktokLink || DEFAULT_SITE.orderTiktokLink,
           navLogoSize: Number(remote.navLogoSize ?? site.navLogoSize ?? DEFAULT_SITE.navLogoSize ?? 130),
           navBarHeight: Number(remote.navBarHeight ?? site.navBarHeight ?? DEFAULT_SITE.navBarHeight ?? 80),
           landingMode: String(remote.landingMode || site.landingMode || DEFAULT_SITE.landingMode || "slider"),
@@ -2555,8 +2569,8 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         care: item.care || "Cuci dengan lembut.",
         sizeChartImage: item.sizeChartImage || item.sizechart || "",
         sizes: Array.isArray(item.sizes) && item.sizes.length ? item.sizes : ["S", "M", "L", "XL"],
-        shopeeLink: item.shopeeLink || "",
-        tiktokLink: item.tiktokLink || "",
+        shopeeLink: item.shopeeLink || item.shopee_link || "",
+        tiktokLink: item.tiktokLink || item.tiktok_link || "",
         videos: Array.isArray(item.videos) ? item.videos.filter(Boolean) : [],
         createdAt: Number(item.createdAt || item.created_at || 0),
         updatedAt: Number(item.updatedAt || item.createdAt || item.created_at || 0),
@@ -2644,10 +2658,10 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       heroTitle.textContent = site.title || DEFAULT_SITE.title;
       heroSubtitle.textContent = site.subtitle || DEFAULT_SITE.subtitle;
       heroDesc.textContent = site.description || DEFAULT_SITE.description;
-      heroBtn1.textContent = site.primaryBtn || DEFAULT_SITE.primaryBtn;
-      heroBtn2.textContent = site.secondaryBtn || DEFAULT_SITE.secondaryBtn;
-      heroBtn1.setAttribute("href", site.primaryLink || "#katalog");
-      heroBtn2.setAttribute("href", site.secondaryLink || "#order");
+      heroBtn1.textContent = site.btn1Text || site.primaryBtn || DEFAULT_SITE.primaryBtn;
+      heroBtn2.textContent = site.btn2Text || site.secondaryBtn || DEFAULT_SITE.secondaryBtn;
+      heroBtn1.setAttribute("href", site.btn1Link || site.primaryLink || "#katalog");
+      heroBtn2.setAttribute("href", site.btn2Link || site.secondaryLink || "#order");
       newSectionTitle.textContent = site.newTitle || DEFAULT_SITE.newTitle;
       bestSectionTitle.textContent = site.bestTitle || DEFAULT_SITE.bestTitle;
       if (testimonialTitle) testimonialTitle.textContent = site.testimonialsTitle || "Testimoni Pelanggan";
