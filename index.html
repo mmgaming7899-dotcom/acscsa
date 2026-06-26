@@ -31,6 +31,11 @@
     a{text-decoration:none;color:inherit}
     button{font-family:inherit}
 
+    :root{
+      --app-height:100vh;
+      --safe-bottom:env(safe-area-inset-bottom, 0px);
+    }
+
     html, body{height:100%;}
     body{overflow-x:hidden;}
     .hero{min-height:100dvh;height:100dvh;}
@@ -86,8 +91,8 @@
     }
 
     .hero{
-      min-height:100vh;
-      height:100vh;
+      min-height:var(--app-height);
+      height:var(--app-height);
       position:relative;
       display:flex;
       align-items:center;
@@ -180,15 +185,15 @@
     .wa-float::before{content:"💬"; font-size:18px; line-height:1;}
     .wa-float:hover{transform:translateY(-2px); color:#fff}
     @media (max-width: 768px){
-      .wa-float{right:14px; bottom:14px; padding:12px 14px; font-size:13px;}
+      .wa-float{display:none !important;}
     }
 
 
     .hero.stack-mode{
       display:block;
       align-items:stretch;
-      min-height:auto;
-      height:auto;
+      min-height:var(--app-height);
+      height:var(--app-height);
       padding:0 !important;
       margin:0;
       max-width:100% !important;
@@ -217,8 +222,8 @@
     .hero.stack-mode .hero-stack-item{
       position:relative;
       width:100%;
-      height:100svh;
-      min-height:100svh;
+      height:var(--app-height);
+      min-height:var(--app-height);
       aspect-ratio:auto;
       overflow:hidden;
       border-radius:0;
@@ -252,8 +257,8 @@
     }
     @media (max-width: 768px){
       .hero.stack-mode .hero-stack-item{
-        height:100dvh;
-        min-height:100dvh;
+        height:var(--app-height);
+        min-height:var(--app-height);
       }
     }
 
@@ -263,8 +268,8 @@
       padding:0 !important;
       margin:0;
       width:100%;
-      min-height:100dvh;
-      height:100dvh;
+      min-height:var(--app-height);
+      height:var(--app-height);
       overflow:hidden;
       background:#111;
     }
@@ -274,7 +279,7 @@
       inset:auto;
       width:100%;
       height:100%;
-      min-height:100dvh;
+      min-height:var(--app-height);
       display:grid;
       grid-template-columns:repeat(2,1fr);
       gap:0;
@@ -286,7 +291,7 @@
     .hero-dior-panel{
       position:relative;
       height:100%;
-      min-height:100dvh;
+      min-height:var(--app-height);
       overflow:hidden;
       background:#111;
       cursor:pointer;
@@ -1638,6 +1643,22 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     const LS_KEY = "seala_admin_catalog_v2";
     const WISHLIST_KEY = "seala_wishlist_v1";
     const WA_NUMBER = "6287856088414";
+
+    function updateAppHeight() {
+      const viewportHeight = window.visualViewport && window.visualViewport.height
+        ? window.visualViewport.height
+        : window.innerHeight;
+      if (!viewportHeight) return;
+      document.documentElement.style.setProperty('--app-height', `${Math.round(viewportHeight)}px`);
+    }
+
+    updateAppHeight();
+    window.addEventListener('resize', updateAppHeight, { passive: true });
+    window.addEventListener('orientationchange', updateAppHeight, { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateAppHeight);
+      window.visualViewport.addEventListener('scroll', updateAppHeight);
+    }
 
     const DEFAULT_SITE = {
       title: "WOMEN",
