@@ -1055,49 +1055,6 @@ lookbookSection:true
 </script>
 
 <style>
-.hero-dior-hover{
-    display:none !important;
-    position:absolute;
-    inset:auto 6% 50% 6%;
-    z-index:5;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    opacity:0;
-    transition:opacity .25s ease, transform .25s ease;
-    pointer-events:none;
-    color:#fff;
-    text-align:center;
-    transform:translateY(-50%) scale(.96);
-    text-shadow:0 8px 24px rgba(0,0,0,.35);
-}
-.hero-dior-hover .hero-dior-hover-pill{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:12px 18px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,.28);
-    background:rgba(0,0,0,.22);
-    backdrop-filter:blur(8px);
-    font-size:12px;
-    letter-spacing:4px;
-    font-weight:800;
-}
-.hero-dior-hover .hero-dior-hover-sub{
-    font-size:11px;
-    letter-spacing:1.6px;
-    opacity:.9;
-}
-.hero-dior-panel:hover .hero-dior-hover{
-    display:none !important;
-    opacity:0;
-    transform:translateY(-50%) scale(.96);
-}
-.wa-float{
-    display:none !important;
-}
-
     :root{
       --nav-h: 80px;
     }
@@ -2128,13 +2085,85 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
       }
     }
 
+
+    function mergeCatalogEntries(remoteItems, localItems){
+      const remoteList = Array.isArray(remoteItems) ? remoteItems : [];
+      const localList = Array.isArray(localItems) ? localItems : [];
+      const localMap = new Map(
+        localList
+          .map(item => [String(item?.id || item?.sku || "").toLowerCase(), item])
+          .filter(([key]) => Boolean(key))
+      );
+
+      const merged = remoteList.map(remoteItem => {
+        const key = String(remoteItem?.id || remoteItem?.sku || "").toLowerCase();
+        const localItem = key ? localMap.get(key) : null;
+        if (!localItem) return normalizeProductRecord(remoteItem);
+
+        const mergedItem = {
+          ...localItem,
+          ...remoteItem,
+          shopeeLink: String(
+            remoteItem?.shopeeLink ||
+            remoteItem?.shopee_link ||
+            remoteItem?.shopee_url ||
+            remoteItem?.link_shopee ||
+            localItem?.shopeeLink ||
+            localItem?.shopee_link ||
+            localItem?.shopee_url ||
+            localItem?.link_shopee ||
+            ""
+          ).trim(),
+          tiktokLink: String(
+            remoteItem?.tiktokLink ||
+            remoteItem?.tiktok_link ||
+            remoteItem?.tiktok_url ||
+            remoteItem?.link_tiktok ||
+            localItem?.tiktokLink ||
+            localItem?.tiktok_link ||
+            localItem?.tiktok_url ||
+            localItem?.link_tiktok ||
+            ""
+          ).trim(),
+          whatsappLink: String(
+            remoteItem?.whatsappLink ||
+            remoteItem?.whatsapp_link ||
+            remoteItem?.whatsapp_url ||
+            remoteItem?.link_whatsapp ||
+            localItem?.whatsappLink ||
+            localItem?.whatsapp_link ||
+            localItem?.whatsapp_url ||
+            localItem?.link_whatsapp ||
+            ""
+          ).trim(),
+          updatedAt: Math.max(Number(remoteItem?.updatedAt || 0), Number(localItem?.updatedAt || 0)),
+        };
+
+        return normalizeProductRecord(mergedItem);
+      });
+
+      const seen = new Set(merged.map(item => String(item?.id || item?.sku || "").toLowerCase()));
+      localList.forEach(localItem => {
+        const key = String(localItem?.id || localItem?.sku || "").toLowerCase();
+        if (!key || seen.has(key)) return;
+        merged.push(normalizeProductRecord(localItem));
+      });
+
+      return merged;
+    }
+
     async function refreshCatalogFromSupabase(force = false){
+      const cached = loadCatalog();
       const remoteResult = await loadRemoteCatalog();
+
       if (remoteResult.ok) {
-        adminCatalog = Array.isArray(remoteResult.data) ? remoteResult.data.map(normalizeProductRecord) : [];
+        const mergedRemote = mergeCatalogEntries(remoteResult.data, cached);
+        adminCatalog = mergedRemote.length ? mergedRemote : cached.map(normalizeProductRecord);
         try {
           if (adminCatalog.length) {
             localStorage.setItem(LS_KEY, JSON.stringify(adminCatalog));
+          } else if (cached.length) {
+            localStorage.setItem(LS_KEY, JSON.stringify(cached.map(normalizeProductRecord)));
           } else {
             localStorage.removeItem(LS_KEY);
           }
@@ -2143,7 +2172,6 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
         return true;
       }
 
-      const cached = loadCatalog();
       adminCatalog = cached.map(normalizeProductRecord);
       syncSiteToPage();
       return false;
@@ -2891,12 +2919,10 @@ function syncSiteToPage() {
       const leftMeta = getSlideMeta(slides[0] || slides[1] || DEFAULT_SITE.slides[0], 0);
       const rightMeta = getSlideMeta(slides[1] || slides[0] || DEFAULT_SITE.slides[1] || DEFAULT_SITE.slides[0], 1);
 
-      const leftFallback = leftMeta.type === "video"
-        ? PLACEHOLDER_IMAGE
-        : PLACEHOLDER_IMAGE;
-      const rightFallback = rightMeta.type === "video"
-        ? PLACEHOLDER_IMAGE
-        : PLACEHOLDER_IMAGE;
+      const DIOR_BLANK = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200"><rect width="100%" height="100%" fill="#111111"/></svg>`);
+
+      const leftFallback = DIOR_BLANK;
+      const rightFallback = DIOR_BLANK;
 
       const leftSrc = await resolveSlideSource(leftMeta, leftFallback);
       const rightSrc = await resolveSlideSource(rightMeta, rightFallback);
@@ -2904,7 +2930,7 @@ function syncSiteToPage() {
       const createMedia = (meta, src, side) => {
         if (meta.type === "video" && src) {
           const videoCandidates = [assetUrl(src), assetUrl(String(src).replace(/ /g, '%20'))].filter(Boolean);
-          const posterAttr = meta.poster ? `poster="${escapeHtml(meta.poster)}"` : `poster="${PLACEHOLDER_IMAGE}"`;
+          const posterAttr = meta.poster ? `poster="${escapeHtml(meta.poster)}"` : `poster="${DIOR_BLANK}"`;
           return `
             <video class="hero-dior-media" preload="auto" muted playsinline loop ${posterAttr} aria-hidden="true">
               ${videoCandidates.map((v) => `<source src="${v}" type="video/mp4">`).join('\n              ')}
@@ -2912,7 +2938,7 @@ function syncSiteToPage() {
             </video>
           `;
         }
-        return `<img class="hero-dior-media" src="${escapeHtml(String(src))}" alt="${escapeHtml(meta.label || side)}">`;
+        return `<img class="hero-dior-media" src="${escapeHtml(String(src || DIOR_BLANK))}" alt="${escapeHtml(meta.label || side)}">`;
       };
 
       const centerText = escapeHtml(site.diorCenterText || DEFAULT_SITE.diorCenterText || "SEALA");
@@ -3649,24 +3675,6 @@ document.addEventListener('click', function(e){
 
   <a class="wa-float" target="_blank" rel="noopener noreferrer" href="https://wa.me/6287856088414?text=Halo%20SEALA%2C%20saya%20ingin%20bertanya%20atau%20pesan%20produk.">WhatsApp</a>
 
-
-<!-- SEALA Uploaded Landing Video -->
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('h1,h2,h3,h4,p,.hero-content,.hero-text,.section-title,.product-card,.article-card')
-    .forEach(el=>el.classList.add('reveal'));
-
-  const obs=new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
-      if(entry.isIntersecting){
-        entry.target.classList.add('show');
-      }
-    });
-  },{threshold:0.15});
-
-  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
-});
-</script>
 
 
 <script>
